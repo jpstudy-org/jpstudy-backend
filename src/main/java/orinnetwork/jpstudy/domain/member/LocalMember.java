@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @DiscriminatorValue("LOCAL")
 @NoArgsConstructor
-public class LocalMember extends Member{
+public class LocalMember extends Member {
 
     @Column(name = "password")
     private String password;
