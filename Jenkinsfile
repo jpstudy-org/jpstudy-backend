@@ -75,7 +75,7 @@ spec:
 
         stage('Build & Push Image') {
             steps {
-                container('docker:git') {
+                container('docker') {
                     script {
 
                         sh 'git config --global --add safe.directory ${env.WORKSPACE}'
