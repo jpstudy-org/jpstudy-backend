@@ -78,7 +78,7 @@ spec:
                 container('docker') {
                     script {
 
-                        sh 'git config --global --add safe.directory ${env.WORKSPACE}'
+                        sh "git config --global --add safe.directory ${env.WORKSPACE}"
 
                         def imageTag = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
                         def fullImageName = "${env.DOCKERHUB_USERNAME}/${env.IMAGE_NAME}:${imageTag}"
