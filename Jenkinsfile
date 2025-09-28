@@ -14,18 +14,6 @@ spec:
       command:
       - cat
       tty: true
-    - name: docker
-      image: docker:git
-      command:
-      - cat
-      tty: true
-      volumeMounts:
-        - name: docker-sock
-          mountPath: /var/run/docker.sock
-    volumes:
-      - name: docker-sock
-        hostPath:
-          path: /var/run/docker.sock
             """
         }
     }
@@ -73,30 +61,43 @@ spec:
             }
         }
 
-        stage('Build & Push Image') {
+        stage('Build with Kaniko') {
             steps {
-                container('docker') {
-                    script {
+                podTemplate(
+                    cloud: 'kubernetes',
+                    namespace: 'jenkins',
+                    containers: [
+                        containerTemplate(
+                            name: 'kaniko',
+                            image: 'gcr.io/kaniko-project/executor:v1.9.0-debug',
+                            command: 'cat',
+                            ttyEnabled: true,
+                            volumeMounts: [
+                                [mountPath: '/kaniko/.docker', name: 'dockerhub-config', readOnly: true]
+                            ]
+                        )
+                    ],
+                    volumes: [
+                        secretVolume(mountPath: '/kaniko/.docker', secretName: 'dockerhub-config', items: [[path: 'config.json', key: '.dockerconfigjson']])
+                    ]
+                ) {
+                    node(POD_LABEL) {
+                        checkout scm
 
-                        sh "git config --global --add safe.directory ${env.WORKSPACE}"
+                        script {
+                            sh 'git config --global --add safe.directory ${env.WORKSPACE}'
+                            def imageTag = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
+                            def fullImageName = "${env.DOCKERHUB_USERNAME}/${env.IMAGE_NAME}:${imageTag}"
 
-                        def imageTag = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
-                        def fullImageName = "${env.DOCKERHUB_USERNAME}/${env.IMAGE_NAME}:${imageTag}"
-
-                        withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                            sh "echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin"
+                            container('kaniko') {
+                                sh """
+                                /kaniko/executor --dockerfile=\`pwd\`/Dockerfile --context=\`pwd\` --destination=${fullImageName}
+                                """
+                            }
                         }
-
-                        echo "Building Docker image: ${fullImageName}"
-                        sh "docker build -t ${fullImageName} ."
-
-                        echo "Pushing Docker image: ${fullImageName}"
-                        sh "docker push ${fullImageName}"
                     }
                 }
             }
         }
-
-
     }
 }
