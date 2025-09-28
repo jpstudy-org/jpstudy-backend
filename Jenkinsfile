@@ -15,7 +15,7 @@ spec:
       - cat
       tty: true
     - name: docker
-      image: docker:20.10.17
+      image: docker:git
       command:
       - cat
       tty: true
