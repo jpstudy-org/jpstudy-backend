@@ -62,37 +62,47 @@ spec:
         }
 
         stage('Build with Kaniko') {
-            steps {
-                podTemplate(
-                    cloud: 'kubernetes',
-                    namespace: 'jenkins',
-                    containers: [
-                        containerTemplate(
-                            name: 'kaniko',
-                            image: 'gcr.io/kaniko-project/executor:v1.9.0-debug',
-                            command: 'cat',
-                            ttyEnabled: true,
-                            volumeMounts: [
-                                [mountPath: '/kaniko/.docker', name: 'dockerhub-config', readOnly: true]
-                            ]
-                        )
-                    ],
-                    volumes: [
-                        secretVolume(mountPath: '/kaniko/.docker', secretName: 'dockerhub-config', items: [[path: 'config.json', key: '.dockerconfigjson']])
-                    ]
-                ) {
-                    node(POD_LABEL) {
-                        checkout scm
+                    steps {
+                        podTemplate(
+                            cloud: 'kubernetes',
+                            namespace: 'jenkins',
+                            yaml: """
+        apiVersion: v1
+        kind: Pod
+        spec:
+          containers:
+          - name: kaniko
+            image: gcr.io/kaniko-project/executor:v1.9.0-debug
+            command:
+            - cat
+            tty: true
+            volumeMounts:
+            - name: dockerhub-config
+              mountPath: /kaniko/.docker
+              readOnly: true
+          volumes:
+          - name: dockerhub-config
+            secret:
+              secretName: dockerhub-config
+              items:
+              - key: .dockerconfigjson
+                path: config.json
+        """
+                        ) {
+                            node(POD_LABEL) {
+                                checkout scm
 
-                        script {
-                            sh 'git config --global --add safe.directory ${env.WORKSPACE}'
-                            def imageTag = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
-                            def fullImageName = "${env.DOCKERHUB_USERNAME}/${env.IMAGE_NAME}:${imageTag}"
+                                script {
+                                    sh "git config --global --add safe.directory ${env.WORKSPACE}"
+                                    def imageTag = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
+                                    def fullImageName = "${env.DOCKERHUB_USERNAME}/${env.IMAGE_NAME}:${imageTag}"
 
-                            container('kaniko') {
-                                sh """
-                                /kaniko/executor --dockerfile=\$(pwd)/Dockerfile --context=\$(pwd) --destination=${fullImageName}
-                                """
+                                    container('kaniko') {
+                                        sh """
+                                        /kaniko/executor --dockerfile=\$(pwd)/Dockerfile --context=\$(pwd) --destination=${fullImageName}
+                                        """
+                                    }
+                                }
                             }
                         }
                     }
