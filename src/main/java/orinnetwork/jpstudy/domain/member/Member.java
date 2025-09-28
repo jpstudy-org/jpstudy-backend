@@ -50,4 +50,6 @@ public abstract class Member {
         this.username = username;
         this.role = role;
     }
+
+    public abstract String getPassword();
 }

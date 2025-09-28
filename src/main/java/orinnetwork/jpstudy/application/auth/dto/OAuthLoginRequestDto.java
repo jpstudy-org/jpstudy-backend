@@ -8,6 +8,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class OAuthLoginRequestDto {
 
-    @NotBlank
+    @NotBlank(message = "인증 코드는 필수입니다.")
     private String authorizationCode;
+
+    @NotBlank(message = "제공자 이름은 필수입니다.")
+    private String provider;
 }

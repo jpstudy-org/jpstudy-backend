@@ -17,4 +17,9 @@ public class LocalMember extends Member {
         super(email, username, role);
         this.password = password;
     }
+
+    @Override
+    public String getPassword() {
+        return this.password;
+    }
 }

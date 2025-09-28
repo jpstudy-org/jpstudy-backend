@@ -10,15 +10,20 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class OauthMember extends Member {
 
-    @Column(nullable = false)
+    @Column()
     private String provider;
 
-    @Column(nullable = false)
+    @Column()
     private String providerId;
 
     public OauthMember(String email, String username, Role role, String provider, String providerId) {
         super(email, username, role);
         this.provider = provider;
         this.providerId = providerId;
+    }
+
+    @Override
+    public String getPassword() {
+        return "";
     }
 }
