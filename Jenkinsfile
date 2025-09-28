@@ -37,10 +37,6 @@ spec:
         INFRA_REPO_URL = ''
     }
 
-    tools {
-        jdk 'JDK21'
-    }
-
     stages {
         stage('Checkout') {
             steps {
