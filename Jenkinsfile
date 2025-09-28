@@ -10,7 +10,7 @@ metadata:
 spec:
     containers:
     - name: gradle
-      image: eclipse-temurin:21-jdk-focal
+      image: eclipse-temurin:21-jdk
       command:
       - cat
       tty: true
