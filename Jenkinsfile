@@ -31,10 +31,10 @@ spec:
     }
 
     environment {
-        DOCKERHUB_USERNAME = ''
-        DOCKERHUB_CREDENTIALS_ID = ''
+        DOCKERHUB_USERNAME = 'chinoel'
+        DOCKERHUB_CREDENTIALS_ID = 'DockerHub'
         REPO_NAME = 'jpstudy'
-        INFRA_REPO_URL = ''
+        INFRA_REPO_URL = 'git@github.com:jpstudy-org/infra.git'
     }
 
     stages {
@@ -43,5 +43,57 @@ spec:
                 checkout scm
             }
         }
+
+        stage('Set Dynamic Variables') {
+            steps {
+                script {
+                    echo "This build is for branch: '${env.BRANCH_NAME}'"
+
+                    if (env.BRANCH_NAME == 'main') {
+                        env.IMAGE_NAME = 'jpstudy-backend'
+                        env.MANIFEST_PATH = 'apps/backend/prod/deployment.yaml'
+                    }
+                    else if (env.BRANCH_NAME == 'dev' || env.BRANCH_NAME == null) {
+                        env.IMAGE_NAME = 'jpstudy-backend-dev'
+                        env.MANIFEST_PATH = 'apps/backend/dev/deployment.yaml'
+                    }
+                    else {
+                        error "Unsupported branch"
+                    }
+                }
+            }
+        }
+
+        stage('Build & Test') {
+            steps {
+                container('gradle') {
+                    sh 'chmod +x ./gradlew'
+                    sh './gradlew clean build'
+                }
+            }
+        }
+
+        stage('Build & Push Image') {
+            steps {
+                container('docker') {
+                    script {
+                        def imageTag = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
+                        def fullImageName = "${env.DOCKERHUB_USERNAME}/${env.IMAGE_NAME}:${imageTag}"
+
+                        withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                            sh "echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin"
+                        }
+
+                        echo "Building Docker image: ${fullImageName}"
+                        sh "docker build -t ${fullImageName} ."
+
+                        echo "Pushing Docker image: ${fullImageName}"
+                        sh "docker push ${fullImageName}"
+                    }
+                }
+            }
+        }
+
+
     }
 }
