@@ -91,7 +91,7 @@ spec:
 
                             container('kaniko') {
                                 sh """
-                                /kaniko/executor --dockerfile=\`pwd\`/Dockerfile --context=\`pwd\` --destination=${fullImageName}
+                                /kaniko/executor --dockerfile=\$(pwd)/Dockerfile --context=\$(pwd) --destination=${fullImageName}
                                 """
                             }
                         }
