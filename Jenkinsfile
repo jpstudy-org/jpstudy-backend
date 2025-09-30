@@ -107,5 +107,33 @@ spec:
                         }
             }
         }
+
+        stage('Update Manifests') {
+            steps {
+                container('gradle') {
+                    script {
+                        def imageTag = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
+                        def fullImageName = "${env.DOCKERHUB_USERNAME}/${env.IMAGE_NAME}:${imageTag}"
+
+                        withCredentials([sshUserPrivateKey(credentialsId: 'github-ssh-key-for-infra', keyFileVariable: 'GIT_SSH_KEY')]) {
+                            sshagent(['github-ssh-key-for-infra']) {
+                                sh 'rm -rf infra'
+                                sh "git clone ${INFRA_REPO_URL} infra"
+                                dir('infra') {
+                                    sh """
+                                    sed -i 's|image: .*${env.IMAGE_NAME}.*|image: ${fullImageName}|g' ${env.MANIFEST_PATH}
+                                    """
+                                    sh 'git config --global user.email "jenkins@ci.bot"'
+                                    sh 'git config --global user.name "Jenkins CI Bot"'
+                                    sh 'git add .'
+                                    sh "git commit -m \"Update Backend image to ${imageTag}\""
+                                    sh 'git push origin main'
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
