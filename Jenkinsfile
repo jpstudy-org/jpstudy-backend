@@ -117,7 +117,7 @@ spec:
                         def imageTag = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
                         def fullImageName = "${env.DOCKERHUB_USERNAME}/${env.IMAGE_NAME}:${imageTag}"
 
-                        withCredentials([sshUserPrivateKey(credentialsId: 'jenkins_token', keyFileVariable: 'GIT_SSH_KEY')]) {
+                        withCredentials([sshUserPrivateKey(credentialsId: 'github-ssh-key-for-infra', keyFileVariable: 'GIT_SSH_KEY')]) {
                             sshagent(['github-ssh-key-for-infra']) {
                                 sh 'rm -rf infra'
                                 sh "git clone ${INFRA_REPO_URL} infra"
