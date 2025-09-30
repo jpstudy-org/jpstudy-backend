@@ -119,8 +119,12 @@ spec:
 
                         withCredentials([sshUserPrivateKey(credentialsId: 'github-ssh-key-for-infra', keyFileVariable: 'GIT_SSH_KEY')]) {
                             sshagent(['github-ssh-key-for-infra']) {
+                                sh 'mkdir -p ~/.ssh'
+                                sh 'ssh-keyscan github.com >> ~/.ssh/known_hosts'
+
                                 sh 'rm -rf infra'
                                 sh "git clone ${INFRA_REPO_URL} infra"
+
                                 dir('infra') {
                                     sh """
                                     sed -i 's|image: .*${env.IMAGE_NAME}.*|image: ${fullImageName}|g' ${env.MANIFEST_PATH}
