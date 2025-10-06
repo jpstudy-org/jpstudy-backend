@@ -1,4 +1,4 @@
-package orinnetwork.jpstudy.presentation.controller.auth;
+package orinnetwork.jpstudy.presentation.auth;
 
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;

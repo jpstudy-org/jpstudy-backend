@@ -1,4 +1,4 @@
-package orinnetwork.jpstudy.presentation.controller.auth;
+package orinnetwork.jpstudy.presentation.auth;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

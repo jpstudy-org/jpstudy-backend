@@ -16,13 +16,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import orinnetwork.jpstudy.domain.BaseEntity;
 
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "auth_type")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public abstract class Member {
+public abstract class Member extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -36,14 +37,6 @@ public abstract class Member {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
-
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
 
     public Member(String email, String username, Role role) {
         this.email = email;
