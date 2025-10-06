@@ -1,4 +1,4 @@
-package orinnetwork.jpstudy.presentation.controller.test;
+package orinnetwork.jpstudy.presentation.test;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
