@@ -31,5 +31,16 @@ spring:
 jwt:
   secret-key: 'this-is-a-dummy-secret-key-for-testing-purposes-only-12345'
 
+cloudflare:
+  r2:
+    bucket: aa
+    account-id: aa
+    access-key-id: aa
+    secret-access-key: aa
+
 server:
   port: 0
+
+app:
+  frontend:
+    base-uri: aa
