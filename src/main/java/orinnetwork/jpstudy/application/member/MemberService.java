@@ -35,16 +35,16 @@ public class MemberService {
 
     private long calculateRequiredExperienceForNextLevel(int currentLevel) {
         if (currentLevel < 10) {
-            return (long) (currentLevel * 5) + 10;
+            return (currentLevel * 5L) + 10;
         }
         else if (currentLevel < 30) {
-            return (long) (currentLevel * 50) + 50;
+            return (currentLevel * 50L) + 50;
         }
         else if (currentLevel < 50) {
-            return (long) (currentLevel * 150) + 1000;
+            return (currentLevel * 150L) + 1000;
         }
         else if (currentLevel < 100){
-            return (long) (currentLevel * 400) + 5000;
+            return (currentLevel * 400L) + 5000;
         }
         else {
             return Long.MAX_VALUE;
