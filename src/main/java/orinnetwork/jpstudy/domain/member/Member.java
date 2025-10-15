@@ -1,16 +1,23 @@
 package orinnetwork.jpstudy.domain.member;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,6 +41,19 @@ public abstract class Member extends BaseEntity {
     @Column(name = "username")
     private String username;
 
+    @Column(nullable = false)
+    private int level = 1;
+
+    @Column(nullable = false)
+    private long experience = 0;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "grade_id")
+    private MemberGrade grade;
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
+    private List<MemberTitle> memberTitles = new ArrayList<>();
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
@@ -42,6 +62,27 @@ public abstract class Member extends BaseEntity {
         this.email = email;
         this.username = username;
         this.role = role;
+    }
+
+    /**
+     *
+     * @param experienceToAdd
+     * 경험치 추가 로직
+     */
+    public void addExperience(int experienceToAdd) {
+        if (experienceToAdd > 0) {
+            this.experience += experienceToAdd;
+        }
+    }
+
+    /**
+     *
+     * @param requiredExperience
+     * 레벨업 처리 로직
+     */
+    public void levelUp(long requiredExperience) {
+        this.level ++;
+        this.experience -= requiredExperience;
     }
 
     public abstract String getPassword();
