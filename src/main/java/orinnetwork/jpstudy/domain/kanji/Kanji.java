@@ -1,6 +1,5 @@
 package orinnetwork.jpstudy.domain.kanji;
 
-import io.swagger.v3.oas.annotations.callbacks.Callback;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -52,16 +51,16 @@ public class Kanji {
     @Column
     private String radical;
 
-    // 급수 (JLPT N5 ~ N1, 없는 경우 null)
+    // 급수
     @Column
-    private Integer jlptLevel;
+    private Integer level;
 
     @ManyToMany(mappedBy = "kanjis")
     private List<Word> words = new ArrayList<>();
 
     @Builder
     public Kanji(String character, String meaning, String meaningEn, String onyomi, String kunyomi,
-                 int strokeCount, String radical, Integer jlptLevel) {
+                 int strokeCount, String radical, Integer level) {
         this.character = character;
         this.meaning = meaning;
         this.meaningEn = meaningEn;
@@ -69,6 +68,6 @@ public class Kanji {
         this.kunyomi = kunyomi;
         this.strokeCount = strokeCount;
         this.radical = radical;
-        this.jlptLevel = jlptLevel;
+        this.level = level;
     }
 }

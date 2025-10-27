@@ -24,6 +24,7 @@ import orinnetwork.jpstudy.presentation.filter.JwtAuthenticationFilter;
 public class SecurityConfig {
 
     private final JwtProvider jwtProvider;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
@@ -32,6 +33,10 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+        http
+                .cors(Customizer.withDefaults());
+
         http
                 .httpBasic(HttpBasicConfigurer::disable)
                 .csrf(CsrfConfigurer::disable)
@@ -47,7 +52,10 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/oauth2/**",
                                 "/login/oauth2/code/**",
-                                "/api/**",
+                                "/api/auth/login",
+                                "/api/auth/signup",
+                                "/api/auth/reissue",
+                                "/api/auth/oauth-login",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
@@ -56,8 +64,8 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 );
 
-        http.oauth2Login(Customizer.withDefaults());
-        http.addFilterBefore(new JwtAuthenticationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class);
+//        http.oauth2Login(Customizer.withDefaults());
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
