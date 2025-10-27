@@ -68,6 +68,10 @@ public class JwtProvider {
         }
     }
 
+    public long getRefreshTokenValidityInMilliseconds() {
+        return REFRESH_TOKEN_EXPIRE_TIME;
+    }
+
     public boolean isValidToken(String token) {
         try {
             Jwts.parser()

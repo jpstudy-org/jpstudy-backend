@@ -3,7 +3,9 @@ package orinnetwork.jpstudy.application.auth;
 import jakarta.transaction.Transactional;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.endpoint.DefaultAuthorizationCodeTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
@@ -33,8 +35,10 @@ public class OAuthService {
 
     private final MemberRepository memberRepository;
     private final JwtProvider jwtProvider;
-    private final OAuth2AuthorizedClientManager oAuth2AuthorizedClientManager;
     private final InMemoryClientRegistrationRepository clientRegistrationRepository;
+
+    private final RedisTemplate<String, String> redisTemplate;
+    private static final String REFRESH_TOKEN_PREFIX = "RT:";
 
     @Transactional
     public TokenResponseDto login(OAuthLoginRequestDto requestDto) {
@@ -52,8 +56,19 @@ public class OAuthService {
 
         String accessToken = jwtProvider.createAccessToken(member.getId(), member.getRole());
         String refreshToken = jwtProvider.createRefreshToken(member.getId());
+        String memberId = member.getId().toString();
 
-        return new TokenResponseDto(accessToken, refreshToken);
+        String redisKey = REFRESH_TOKEN_PREFIX + memberId;
+        long refreshTokenValidityMs = jwtProvider.getRefreshTokenValidityInMilliseconds();
+
+        redisTemplate.opsForValue().set(
+                redisKey,
+                refreshToken,
+                refreshTokenValidityMs,
+                TimeUnit.MILLISECONDS
+        );
+
+        return new TokenResponseDto(accessToken, refreshToken, member.getUsername());
     }
 
 

@@ -20,4 +20,11 @@ public class UserDetailServiceImpl implements UserDetailsService {
 
         return new CustomUserDetails(member);
     }
+
+    public UserDetails loadUserById(Long memberId) throws UsernameNotFoundException {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new UsernameNotFoundException("ID와 해당하는 사용자를 찾을 수 없습니다."));
+
+        return new CustomUserDetails(member);
+    }
 }
