@@ -14,6 +14,8 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 import orinnetwork.jpstudy.domain.BaseEntity;
 import orinnetwork.jpstudy.domain.category.Category;
 import orinnetwork.jpstudy.domain.member.Member;
@@ -37,6 +39,9 @@ public class Post extends BaseEntity {
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
+    @Column(length = 50)
+    private String ipAddress;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
@@ -45,18 +50,54 @@ public class Post extends BaseEntity {
     @Column(nullable = false)
     private PostType postType;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PostStatus postStatus;
+
+    @ColumnDefault("0")
+    @Column(nullable = false)
+    private int viewCount;
+
+    @ColumnDefault("0")
+    @Column(nullable = false)
+    private int commentCount;
+
     @Builder
-    public Post(String title, String content, Member member, Category category, PostType postType) {
+    public Post(String title, String content, Member member, Category category, PostType postType, PostStatus postStatus, String ipAddress) {
         this.title = title;
         this.content = content;
         this.member = member;
         this.category = category;
         this.postType = postType;
+        this.postStatus = postStatus;
+        this.ipAddress = ipAddress;
     }
 
-    public void update(String title, String content, Category category) {
+    public void update(String title, String content, Category category, PostStatus postStatus) {
         this.title = title;
         this.content = content;
         this.category = category;
+        this.postStatus = postStatus;
+    }
+
+    public void delete() {
+        if (this.postStatus == PostStatus.DELETED) {
+            throw new IllegalArgumentException("이미 삭제된 게시글입니다.");
+        }
+        this.postStatus = PostStatus.DELETED;
+    }
+
+    public void increaseViewCount() {
+        this.viewCount++;
+    }
+
+    public void increaseCommentCount() {
+        this.commentCount++;
+    }
+
+    public void decreaseCommentCount() {
+        if (this.commentCount > 0) {
+            this.commentCount--;
+        }
     }
 }
