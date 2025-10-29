@@ -61,7 +61,7 @@ public class AuthService {
                 TimeUnit.MILLISECONDS
         );
 
-        return new TokenResponseDto(accessToken, refreshToken, userName);
+        return new TokenResponseDto(accessToken, refreshToken, userName, refreshTokenValidityMs);
     }
 
     public TokenResponseDto login(LoginRequestDto requestDto) {
@@ -90,7 +90,7 @@ public class AuthService {
                 TimeUnit.MILLISECONDS
         );
 
-        return new TokenResponseDto(accessToken, refreshToken, userName);
+        return new TokenResponseDto(accessToken, refreshToken, userName, refreshTokenValidityMs);
     }
 
     public void logout() {
@@ -131,7 +131,8 @@ public class AuthService {
 
         String newAccessToken = jwtProvider.createAccessToken(member.getId(), member.getRole());
         String userName = member.getUsername();
+        long refreshTokenValidityMs = jwtProvider.getRefreshTokenValidityInMilliseconds();
 
-        return new TokenResponseDto(newAccessToken, clientRefreshToken, userName);
+        return new TokenResponseDto(newAccessToken, clientRefreshToken, userName, refreshTokenValidityMs);
     }
 }

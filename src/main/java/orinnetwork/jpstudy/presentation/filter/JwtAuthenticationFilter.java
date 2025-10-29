@@ -1,25 +1,17 @@
 package orinnetwork.jpstudy.presentation.filter;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import orinnetwork.jpstudy.domain.member.Role;
 import orinnetwork.jpstudy.infrastructure.jwt.JwtProvider;
-import orinnetwork.jpstudy.infrastructure.security.CustomUserDetails;
 import orinnetwork.jpstudy.infrastructure.security.UserDetailServiceImpl;
 
 @Component
@@ -59,10 +51,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     UserDetails userDetails = userDetailService.loadUserById(memberId);
 
-                    UsernamePasswordAuthenticationToken authentiaction = new UsernamePasswordAuthenticationToken(
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                             userDetails, null, userDetails.getAuthorities()
                     );
-                    SecurityContextHolder.getContext().setAuthentication(authentiaction);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             } catch (Exception e) {
                 SecurityContextHolder.clearContext();
@@ -78,16 +70,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return bearerToken.substring(BEARER_PREFIX.length());
         }
         return null;
-    }
-
-    private Authentication getAuthentication(Claims claims) {
-        Long memberId = Long.valueOf(claims.getSubject());
-        String roleName = claims.get("role", String.class);
-
-        List<SimpleGrantedAuthority> authorities = Collections.singletonList(
-                new SimpleGrantedAuthority(Role.valueOf(roleName).getKey())
-        );
-
-        return new UsernamePasswordAuthenticationToken(memberId, null, authorities);
     }
 }
