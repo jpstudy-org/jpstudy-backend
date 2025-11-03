@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
@@ -55,6 +56,9 @@ public class Kanji {
     @Column
     private Integer level;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     @ManyToMany(mappedBy = "kanjis")
     private List<Word> words = new ArrayList<>();
 
@@ -69,5 +73,20 @@ public class Kanji {
         this.strokeCount = strokeCount;
         this.radical = radical;
         this.level = level;
+    }
+
+    public void updateDetails(String meaning, String meaningEn, String onyomi, String kunyomi,
+                              int strokeCount, String radical, Integer level) {
+        this.meaning = meaning;
+        this.meaningEn = meaningEn;
+        this.onyomi = onyomi;
+        this.kunyomi = kunyomi;
+        this.strokeCount = strokeCount;
+        this.radical = radical;
+        this.level = level;
+    }
+
+    public void softDelete() {
+        this.deletedAt = LocalDateTime.now();
     }
 }

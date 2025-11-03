@@ -1,0 +1,2 @@
+ALTER TABLE kanji
+    ADD deleted_at TIMESTAMP WITHOUT TIME ZONE;
