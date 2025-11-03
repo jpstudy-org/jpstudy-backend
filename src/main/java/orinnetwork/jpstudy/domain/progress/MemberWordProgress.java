@@ -48,7 +48,7 @@ public class MemberWordProgress {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private LearningStatus status;
+    private MasteryLevel masteryLevel;
 
     @Column
     private LocalDateTime lastReviewedAt;
@@ -60,11 +60,11 @@ public class MemberWordProgress {
     public MemberWordProgress(Member member, Word word) {
         this.member = member;
         this.word = word;
-        this.status = LearningStatus.NOT_STARTED;
+        this.masteryLevel = MasteryLevel.NEW;
     }
 
-    public void updateStatus(LearningStatus newStatus) {
-        this.status = newStatus;
+    public void updateStatus(MasteryLevel masteryLevel) {
+        this.masteryLevel = masteryLevel;
     }
 
     public void updateReviewSchedule(LocalDateTime lastReviewedAt, LocalDateTime nextReviewAt) {
