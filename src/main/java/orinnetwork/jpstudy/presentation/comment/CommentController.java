@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import orinnetwork.jpstudy.application.comment.CommentService;
 import orinnetwork.jpstudy.application.comment.dto.CommentRequest;
 import orinnetwork.jpstudy.application.comment.dto.CommentResponse;
+import orinnetwork.jpstudy.application.dto.CustomPageResponse;
 import orinnetwork.jpstudy.infrastructure.security.CustomUserDetails;
 import orinnetwork.jpstudy.infrastructure.util.IpUtil;
 
@@ -46,11 +47,11 @@ public class CommentController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<CommentResponse>> getComments(
+    public ResponseEntity<CustomPageResponse<CommentResponse>> getComments(
             @PathVariable Long postId,
             @PageableDefault(size = 20, sort = "createdAt", direction = Direction.DESC) Pageable pageable
             ) {
-        Page<CommentResponse> page = commentService.getComments(postId, pageable);
+        CustomPageResponse<CommentResponse> page = commentService.getComments(postId, pageable);
         return ResponseEntity.ok(page);
     }
 

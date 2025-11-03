@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import orinnetwork.jpstudy.application.comment.dto.CommentRequest;
 import orinnetwork.jpstudy.application.comment.dto.CommentResponse;
+import orinnetwork.jpstudy.application.dto.CustomPageResponse;
 import orinnetwork.jpstudy.domain.comment.Comment;
 import orinnetwork.jpstudy.domain.comment.CommentRepository;
 import orinnetwork.jpstudy.domain.comment.CommentStatus;
@@ -52,7 +53,7 @@ public class CommentService {
         return CommentResponse.from(savedComment);
     }
 
-    public Page<CommentResponse> getComments(Long postId, Pageable pageable) {
+    public CustomPageResponse<CommentResponse> getComments(Long postId, Pageable pageable) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 게시글은 찾을 수 없습니다."));
 
@@ -66,7 +67,9 @@ public class CommentService {
                 pageable
         );
 
-        return commentPage.map(CommentResponse::from);
+        Page<CommentResponse> responses = commentPage.map(CommentResponse::from);
+
+        return new CustomPageResponse<>(responses);
     }
 
     @Transactional

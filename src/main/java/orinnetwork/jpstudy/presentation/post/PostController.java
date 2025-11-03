@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import orinnetwork.jpstudy.application.dto.CustomPageResponse;
 import orinnetwork.jpstudy.application.post.PostService;
 import orinnetwork.jpstudy.application.post.dto.PostRequest;
 import orinnetwork.jpstudy.application.post.dto.PostDetailResponse;
@@ -69,11 +70,11 @@ public class PostController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<PostSummaryResponse>> getPosts(
+    public ResponseEntity<CustomPageResponse<PostSummaryResponse>> getPosts(
             @PageableDefault(size = 30, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable
     ) {
-        Page<PostSummaryResponse> responsePage = postService.getPosts(pageable);
+        CustomPageResponse<PostSummaryResponse> responsePage = postService.getPosts(pageable);
         return ResponseEntity.ok(responsePage);
     }
 }

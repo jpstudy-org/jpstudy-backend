@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import orinnetwork.jpstudy.application.admin.dictionary.kanji.AdminKanjiService;
 import orinnetwork.jpstudy.application.admin.dictionary.kanji.dto.KanjiRequest;
 import orinnetwork.jpstudy.application.admin.dictionary.kanji.dto.KanjiResponse;
+import orinnetwork.jpstudy.application.dto.CustomPageResponse;
 
 @RestController
 @RequestMapping("/api/admin/kanji")
@@ -53,11 +55,11 @@ public class AdminKanjiController {
      * @param pageable 페이징 정보 (page, size, sort)
      */
     @GetMapping
-    public ResponseEntity<Page<KanjiResponse>> getKanjis(
+    public ResponseEntity<CustomPageResponse<KanjiResponse>> getKanjis(
             @RequestParam(required = false) String keyword,
             @PageableDefault(size = 10) Pageable pageable) {
 
-        Page<KanjiResponse> kanjiPage = adminKanjiService.getKanjis(keyword, pageable);
+        CustomPageResponse<KanjiResponse> kanjiPage = adminKanjiService.getKanjis(keyword, pageable);
         return ResponseEntity.ok(kanjiPage);
     }
 
@@ -75,6 +77,7 @@ public class AdminKanjiController {
      * 한자 삭제
      * @param id 삭제 할 ID
      */
+    @DeleteMapping
     public ResponseEntity<Void> deleteKanji(@PathVariable Long id) {
         adminKanjiService.deleteKanji(id);
         return ResponseEntity.noContent().build();

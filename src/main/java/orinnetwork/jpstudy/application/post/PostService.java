@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import orinnetwork.jpstudy.application.dto.CustomPageResponse;
 import orinnetwork.jpstudy.application.post.dto.PostRequest;
 import orinnetwork.jpstudy.application.post.dto.PostDetailResponse;
 import orinnetwork.jpstudy.application.post.dto.PostSummaryResponse;
@@ -102,9 +103,10 @@ public class PostService {
      * @param pageable 페이지 번호
      * @return 해당 페이지 게시물 [PostSummaryResponseDto]
      */
-    public Page<PostSummaryResponse> getPosts(Pageable pageable) {
+    public CustomPageResponse<PostSummaryResponse> getPosts(Pageable pageable) {
         Page<Post> postPage = postRepository.findByPostStatus(PostStatus.ACTIVE, pageable);
+        Page<PostSummaryResponse> responsePage = postPage.map(PostSummaryResponse::from);
 
-        return postPage.map(PostSummaryResponse::from);
+        return new CustomPageResponse<>(responsePage);
     }
 }

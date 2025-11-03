@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import orinnetwork.jpstudy.application.admin.dictionary.kanji.dto.KanjiRequest;
 import orinnetwork.jpstudy.application.admin.dictionary.kanji.dto.KanjiResponse;
+import orinnetwork.jpstudy.application.dto.CustomPageResponse;
 import orinnetwork.jpstudy.domain.kanji.Kanji;
 import orinnetwork.jpstudy.domain.kanji.KanjiRepository;
 
@@ -108,7 +109,7 @@ public class AdminKanjiService {
 
     // 단어 조회 (페이징/검색)
     @Transactional(readOnly = true)
-    public Page<KanjiResponse> getKanjis(String keyword, Pageable pageable) {
+    public CustomPageResponse<KanjiResponse> getKanjis(String keyword, Pageable pageable) {
         Page<Kanji> kanjiPage;
 
         if (keyword == null || keyword.isBlank()) {
@@ -117,7 +118,9 @@ public class AdminKanjiService {
             kanjiPage = kanjiRepository.searchActiveByKeyword(keyword, pageable);
         }
 
-        return kanjiPage.map(KanjiResponse::from);
+        Page<KanjiResponse> responses = kanjiPage.map(KanjiResponse::from);
+
+        return new CustomPageResponse<>(responses);
     }
 
     // 중복 검사
