@@ -13,9 +13,8 @@ public interface MemberKanjiProgressRepository extends JpaRepository<MemberKanji
 
     Optional<MemberKanjiProgress> findByMemberAndKanji(Member member, Kanji kanji);
 
-    @Query("SELECT DISTINCT p FROM MemberKanjiProgress p " +
+    @Query("SELECT p FROM MemberKanjiProgress p " +
             "JOIN FETCH p.kanji k " +
-            "LEFT JOIN FETCH k.words " +
             "WHERE p.member = :member " +
             "AND p.nextReviewAt <= :now " +
             "AND p.masteryLevel != 'MASTERED'")

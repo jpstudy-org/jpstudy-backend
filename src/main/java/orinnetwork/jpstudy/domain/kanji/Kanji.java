@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +15,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import orinnetwork.jpstudy.domain.word.Word;
+import orinnetwork.jpstudy.domain.word.WordKanji;
 
 @Entity
 @Getter
@@ -59,8 +61,8 @@ public class Kanji {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    @ManyToMany(mappedBy = "kanjis")
-    private List<Word> words = new ArrayList<>();
+    @OneToMany(mappedBy = "kanji")
+    private List<WordKanji> wordKanjis = new ArrayList<>();
 
     @Builder
     public Kanji(String character, String meaning, String meaningEn, String onyomi, String kunyomi,

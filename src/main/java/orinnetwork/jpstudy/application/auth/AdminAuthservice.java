@@ -1,4 +1,4 @@
-package orinnetwork.jpstudy.application.admin.auth;
+package orinnetwork.jpstudy.application.auth;
 
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
@@ -6,12 +6,11 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import orinnetwork.jpstudy.application.admin.auth.dto.AdminLoginRequest;
-import orinnetwork.jpstudy.application.admin.auth.dto.AdminTokenResponse;
+import orinnetwork.jpstudy.application.auth.dto.LoginRequestDto;
+import orinnetwork.jpstudy.application.auth.dto.TokenResponseDto;
 import orinnetwork.jpstudy.domain.member.Member;
 import orinnetwork.jpstudy.domain.member.MemberRepository;
 import orinnetwork.jpstudy.domain.member.Role;
@@ -29,7 +28,7 @@ public class AdminAuthservice {
     private final RedisTemplate<String, String> redisTemplate;
     private static final String REFRESH_TOKEN_PREFIX = "RT:";
 
-    public AdminTokenResponse login(AdminLoginRequest requestDto) {
+    public TokenResponseDto login(LoginRequestDto requestDto) {
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(requestDto.getEmail(), requestDto.getPassword());
 
@@ -40,11 +39,11 @@ public class AdminAuthservice {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         Long memberId = userDetails.getMemberId();
         Role role = userDetails.getMember().getRole();
+        String userName = userDetails.getUsername();
 
         if (role != Role.ADMIN) {
             throw new AccessDeniedException("관리자 권한이 없습니다.");
         }
-
 
         String accessToken = jwtProvider.createAccessToken(memberId, role);
         String refreshToken = jwtProvider.createRefreshToken(memberId);
@@ -59,7 +58,7 @@ public class AdminAuthservice {
                 TimeUnit.MILLISECONDS
         );
 
-        return new AdminTokenResponse(accessToken, refreshToken);
+        return new TokenResponseDto(accessToken, refreshToken, userName, refreshTokenValidityMs);
     }
 
     public void logout() {
@@ -77,7 +76,7 @@ public class AdminAuthservice {
         }
     }
 
-    public AdminTokenResponse reissueToken(String clientRefreshToken) {
+    public TokenResponseDto reissueToken(String clientRefreshToken) {
         if (!jwtProvider.isValidToken(clientRefreshToken)) {
             throw new IllegalArgumentException("유효하지 않거나 만료된 RefreshToken 입니다.");
         }
@@ -103,7 +102,9 @@ public class AdminAuthservice {
         }
 
         String newAccessToken = jwtProvider.createAccessToken(member.getId(), member.getRole());
+        String userName = member.getUsername();
+        long refreshTokenValidityMs = jwtProvider.getRefreshTokenValidityInMilliseconds();
 
-        return new AdminTokenResponse(newAccessToken, clientRefreshToken);
+        return new TokenResponseDto(newAccessToken, clientRefreshToken, userName, refreshTokenValidityMs);
     }
 }

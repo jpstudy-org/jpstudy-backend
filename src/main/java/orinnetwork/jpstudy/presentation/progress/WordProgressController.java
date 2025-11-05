@@ -9,24 +9,24 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import orinnetwork.jpstudy.application.progress.kanji.KanjiProgressService;
-import orinnetwork.jpstudy.application.progress.kanji.dto.ReviewRequest;
-import orinnetwork.jpstudy.application.progress.kanji.dto.StudySessionResponse;
+import orinnetwork.jpstudy.application.progress.word.WordProgressService;
+import orinnetwork.jpstudy.application.progress.word.dto.ReviewRequest;
+import orinnetwork.jpstudy.application.progress.word.dto.StudySessionResponse;
 import orinnetwork.jpstudy.infrastructure.security.CustomUserDetails;
 
 @RestController
-@RequestMapping("/api/progress/kanji")
+@RequestMapping("/api/progress/word")
 @RequiredArgsConstructor
-public class KanjiProgressController {
+public class WordProgressController {
 
-    private final KanjiProgressService kanjiProgressService;
+    private final WordProgressService wordProgressService;
 
     @GetMapping("/session")
     public ResponseEntity<StudySessionResponse> getStudySession(
             @AuthenticationPrincipal CustomUserDetails userDetails
             ) {
         Long memberId = userDetails.getMemberId();
-        StudySessionResponse session = kanjiProgressService.getStudySession(memberId);
+        StudySessionResponse session = wordProgressService.getStudySession(memberId);
 
         return ResponseEntity.ok(session);
     }
@@ -35,11 +35,11 @@ public class KanjiProgressController {
     public ResponseEntity<Void> submitReview(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody ReviewRequest request
-    ) {
+            ) {
         Long memberId = userDetails.getMemberId();
-        kanjiProgressService.updateProgress(
+        wordProgressService.updateProgress(
                 memberId,
-                request.getKanjiId(),
+                request.getWordId(),
                 request.getDifficulty()
         );
         return ResponseEntity.ok().build();

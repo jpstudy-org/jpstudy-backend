@@ -1,4 +1,4 @@
-package orinnetwork.jpstudy.application.progress;
+package orinnetwork.jpstudy.application.progress.kanji;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -7,9 +7,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import orinnetwork.jpstudy.application.progress.dto.KanjiCardDto;
-import orinnetwork.jpstudy.application.progress.dto.ReviewDifficulty;
-import orinnetwork.jpstudy.application.progress.dto.StudySessionResponse;
+import orinnetwork.jpstudy.application.progress.kanji.dto.KanjiCardDto;
+import orinnetwork.jpstudy.application.progress.kanji.dto.ReviewDifficulty;
+import orinnetwork.jpstudy.application.progress.kanji.dto.StudySessionResponse;
 import orinnetwork.jpstudy.domain.kanji.Kanji;
 import orinnetwork.jpstudy.domain.kanji.KanjiRepository;
 import orinnetwork.jpstudy.domain.member.Member;

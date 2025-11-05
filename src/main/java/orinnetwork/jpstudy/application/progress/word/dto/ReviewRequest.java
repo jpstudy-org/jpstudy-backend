@@ -1,4 +1,4 @@
-package orinnetwork.jpstudy.application.progress.dto;
+package orinnetwork.jpstudy.application.progress.word.dto;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
@@ -10,13 +10,13 @@ import lombok.NoArgsConstructor;
 public class ReviewRequest {
 
     @NotNull(message = "한자 ID 필수")
-    private Long kanjiId;
+    private Long wordId;
 
     @NotNull(message = "학습 난이도 평가 필수")
     private ReviewDifficulty difficulty;
 
-    public ReviewRequest(Long kanjiId, ReviewDifficulty difficulty) {
-        this.kanjiId = kanjiId;
+    public ReviewRequest(Long wordId, ReviewDifficulty difficulty) {
+        this.wordId = wordId;
         this.difficulty = difficulty;
     }
 }

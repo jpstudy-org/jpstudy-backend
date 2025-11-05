@@ -81,8 +81,8 @@ public class AdminKanjiService {
 
     // 단어 삭제
     @Transactional
-    public void deleteKanji(Long id) {
-        Kanji kanji = kanjiRepository.findById(id)
+    public void deleteKanji(KanjiRequest kanjiRequest) {
+        Kanji kanji = kanjiRepository.findByCharacter(kanjiRequest.getCharacter())
                 .orElseThrow(() -> new IllegalArgumentException("해당 한자는 존재하지 않습니다."));
 
         kanji.softDelete();

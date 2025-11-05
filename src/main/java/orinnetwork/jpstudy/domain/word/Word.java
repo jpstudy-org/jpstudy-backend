@@ -5,14 +5,14 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import orinnetwork.jpstudy.domain.kanji.Kanji;
 
 @Entity
 @Getter
@@ -38,16 +38,37 @@ public class Word {
     // 뜻 (영어)
     private String meaningEn;
 
+    @Column(nullable = false)
+    private int level;
+
     // 한자 여러 단어 포함 가능
-    @ManyToMany
-    private List<Kanji> kanjis = new ArrayList<>();
+    @OneToMany(mappedBy = "word")
+    private List<WordKanji> wordKanjis = new ArrayList<>();
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     @Builder
-    public Word(String term, String reading, String meaning, String meaningEn, List<Kanji> kanjis) {
+    public Word(String term, String reading, String meaning, String meaningEn, int level) {
         this.term = term;
         this.reading = reading;
         this.meaning = meaning;
         this.meaningEn = meaningEn;
-        this.kanjis = kanjis;
+        this.level = level;
+    }
+
+    public void softDelete() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    public void restore() {
+        this.deletedAt = null;
+    }
+
+    public void updateDetails(String reading, String meaning, String meaningEn, int level) {
+        this.reading = reading;
+        this.meaning = meaning;
+        this.meaningEn = meaningEn;
+        this.level = level;
     }
 }

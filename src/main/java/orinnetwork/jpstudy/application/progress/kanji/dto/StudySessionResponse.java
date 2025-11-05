@@ -1,4 +1,4 @@
-package orinnetwork.jpstudy.application.progress.dto;
+package orinnetwork.jpstudy.application.progress.kanji.dto;
 
 import java.util.List;
 import lombok.Getter;
