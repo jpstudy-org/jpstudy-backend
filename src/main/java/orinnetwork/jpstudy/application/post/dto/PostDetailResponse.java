@@ -6,7 +6,7 @@ import lombok.Getter;
 import orinnetwork.jpstudy.domain.post.Post;
 
 @Getter
-public class PostResponseDto {
+public class PostDetailResponse {
 
     private final Long postId;
     private final String title;
@@ -15,7 +15,7 @@ public class PostResponseDto {
     private final LocalDateTime createdAt;
 
     @Builder
-    public PostResponseDto(Long postId, String title, String content, String authorName, LocalDateTime createdAt) {
+    public PostDetailResponse(Long postId, String title, String content, String authorName, LocalDateTime createdAt) {
         this.postId = postId;
         this.title = title;
         this.content = content;
@@ -23,8 +23,8 @@ public class PostResponseDto {
         this.createdAt = createdAt;
     }
 
-    public static PostResponseDto from(Post post) {
-        return PostResponseDto.builder()
+    public static PostDetailResponse from(Post post) {
+        return PostDetailResponse.builder()
                 .postId(post.getId())
                 .title(post.getTitle())
                 .content(post.getContent())

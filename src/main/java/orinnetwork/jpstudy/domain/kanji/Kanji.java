@@ -1,12 +1,13 @@
 package orinnetwork.jpstudy.domain.kanji;
 
-import io.swagger.v3.oas.annotations.callbacks.Callback;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
@@ -14,6 +15,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import orinnetwork.jpstudy.domain.word.Word;
+import orinnetwork.jpstudy.domain.word.WordKanji;
 
 @Entity
 @Getter
@@ -52,16 +54,19 @@ public class Kanji {
     @Column
     private String radical;
 
-    // 급수 (JLPT N5 ~ N1, 없는 경우 null)
+    // 급수
     @Column
-    private Integer jlptLevel;
+    private Integer level;
 
-    @ManyToMany(mappedBy = "kanjis")
-    private List<Word> words = new ArrayList<>();
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @OneToMany(mappedBy = "kanji")
+    private List<WordKanji> wordKanjis = new ArrayList<>();
 
     @Builder
     public Kanji(String character, String meaning, String meaningEn, String onyomi, String kunyomi,
-                 int strokeCount, String radical, Integer jlptLevel) {
+                 int strokeCount, String radical, Integer level) {
         this.character = character;
         this.meaning = meaning;
         this.meaningEn = meaningEn;
@@ -69,6 +74,21 @@ public class Kanji {
         this.kunyomi = kunyomi;
         this.strokeCount = strokeCount;
         this.radical = radical;
-        this.jlptLevel = jlptLevel;
+        this.level = level;
+    }
+
+    public void updateDetails(String meaning, String meaningEn, String onyomi, String kunyomi,
+                              int strokeCount, String radical, Integer level) {
+        this.meaning = meaning;
+        this.meaningEn = meaningEn;
+        this.onyomi = onyomi;
+        this.kunyomi = kunyomi;
+        this.strokeCount = strokeCount;
+        this.radical = radical;
+        this.level = level;
+    }
+
+    public void softDelete() {
+        this.deletedAt = LocalDateTime.now();
     }
 }

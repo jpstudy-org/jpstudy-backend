@@ -12,10 +12,15 @@ spring:
           google:
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
-            redirect-uri: ${FRONTEND_URI}login/oauth2/code/google
+            redirect-uri: ${BACKEND_URI}/login/oauth2/code/google
             scope:
               - profile
               - email
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: 6379
 
   datasource:
     url: ${POSTGRES_URL}
@@ -36,6 +41,8 @@ spring:
     enabled: ${FLYWAY_ENABLED}
     locations: classpath:db/migration
 
+
+
 jwt:
   secret-key: ${JWT_SECRET_KEY}
 
@@ -51,4 +58,11 @@ server:
 
 app:
   frontend:
-    base-uri: ${FRONTEND_URI:http://localhost:3000/}
+    base-uri: ${FRONTEND_URI}
+
+logging:
+  level:
+    root: info
+
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS}

@@ -1,0 +1,5 @@
+ALTER TABLE word
+    ADD level INTEGER;
+
+ALTER TABLE word
+    ALTER COLUMN level SET NOT NULL;
