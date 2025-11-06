@@ -47,7 +47,7 @@ public class MemberKanjiProgress {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private LearningStatus status;
+    private MasteryLevel masteryLevel;
 
     @Column
     private LocalDateTime lastReviewedAt;
@@ -55,11 +55,17 @@ public class MemberKanjiProgress {
     @Column
     private LocalDateTime nextReviewAt;
 
-    public MemberKanjiProgress(Member member, Kanji kanji, LearningStatus status, LocalDateTime lastReviewedAt,
+    public MemberKanjiProgress(Member member, Kanji kanji, MasteryLevel masteryLevel, LocalDateTime lastReviewedAt,
                                LocalDateTime nextReviewAt) {
         this.member = member;
         this.kanji = kanji;
-        this.status = status;
+        this.masteryLevel = masteryLevel;
+        this.lastReviewedAt = lastReviewedAt;
+        this.nextReviewAt = nextReviewAt;
+    }
+
+    public void update(MasteryLevel newMasteryLevel, LocalDateTime lastReviewedAt, LocalDateTime nextReviewAt) {
+        this.masteryLevel = newMasteryLevel;
         this.lastReviewedAt = lastReviewedAt;
         this.nextReviewAt = nextReviewAt;
     }

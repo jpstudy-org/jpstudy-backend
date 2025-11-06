@@ -58,10 +58,17 @@ public abstract class Member extends BaseEntity {
     @Column(nullable = false)
     private Role role;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     public Member(String email, String username, Role role) {
         this.email = email;
         this.username = username;
         this.role = role;
+    }
+
+    public void updateProfile(String username) {
+        this.username = username;
     }
 
     /**
@@ -86,4 +93,8 @@ public abstract class Member extends BaseEntity {
     }
 
     public abstract String getPassword();
+
+    public void withdraw() {
+        this.deletedAt = LocalDateTime.now();
+    }
 }

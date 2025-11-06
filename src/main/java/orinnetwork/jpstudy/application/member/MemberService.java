@@ -3,6 +3,8 @@ package orinnetwork.jpstudy.application.member;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import orinnetwork.jpstudy.application.member.dto.MemberProfileResponse;
+import orinnetwork.jpstudy.application.member.dto.MemberUpdateRequest;
 import orinnetwork.jpstudy.domain.member.Member;
 import orinnetwork.jpstudy.domain.member.MemberRepository;
 
@@ -11,6 +13,41 @@ import orinnetwork.jpstudy.domain.member.MemberRepository;
 public class MemberService {
 
     private final MemberRepository memberRepository;
+
+
+    /**
+     * 마이페이지 : 프로필 조회
+     * @param userId 프로필 ID
+     */
+    @Transactional(readOnly = true)
+    public MemberProfileResponse getMyProfile(Long userId) {
+        Member member = memberRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        return MemberProfileResponse.from(member);
+    }
+
+
+    @Transactional
+    public void updateProfile(Long userId, MemberUpdateRequest request) {
+        Member member = memberRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        member.updateProfile(request.getUsername());
+    }
+
+
+    /**
+     * 마이페이지 : 탈퇴
+     * @param userId 탈퇴할 ID
+     */
+    @Transactional
+    public void withdrawMember(Long userId) {
+        Member member = memberRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        member.withdraw();
+    }
 
     @Transactional
     public void addExperience(Long userId, int experienceToAdd) {

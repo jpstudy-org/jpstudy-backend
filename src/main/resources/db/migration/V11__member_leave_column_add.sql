@@ -1,0 +1,2 @@
+ALTER TABLE member
+    ADD deleted_at TIMESTAMP WITHOUT TIME ZONE;

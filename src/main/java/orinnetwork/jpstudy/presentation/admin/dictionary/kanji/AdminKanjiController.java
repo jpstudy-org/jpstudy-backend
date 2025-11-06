@@ -75,11 +75,11 @@ public class AdminKanjiController {
 
     /**
      * 한자 삭제
-     * @param id 삭제 할 ID
+     * @param kanjiRequest 삭제 할 한자 정보
      */
     @DeleteMapping
-    public ResponseEntity<Void> deleteKanji(@PathVariable Long id) {
-        adminKanjiService.deleteKanji(id);
+    public ResponseEntity<Void> deleteKanji(@RequestBody KanjiRequest kanjiRequest) {
+        adminKanjiService.deleteKanji(kanjiRequest);
         return ResponseEntity.noContent().build();
     }
 }
