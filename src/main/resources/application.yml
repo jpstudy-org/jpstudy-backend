@@ -22,6 +22,7 @@ spring:
       host: ${REDIS_HOST}
       port: 6379
       password: ${REDIS_PASSWORD:}
+      username: default
 
   datasource:
     url: ${POSTGRES_URL}
