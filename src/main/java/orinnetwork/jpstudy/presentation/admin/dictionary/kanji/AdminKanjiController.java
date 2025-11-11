@@ -2,21 +2,20 @@ package orinnetwork.jpstudy.presentation.admin.dictionary.kanji;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import orinnetwork.jpstudy.application.admin.dictionary.kanji.AdminKanjiService;
+import orinnetwork.jpstudy.application.admin.dictionary.kanji.KanjiService;
 import orinnetwork.jpstudy.application.admin.dictionary.kanji.dto.KanjiRequest;
 import orinnetwork.jpstudy.application.admin.dictionary.kanji.dto.KanjiResponse;
 import orinnetwork.jpstudy.application.dto.CustomPageResponse;
@@ -24,9 +23,10 @@ import orinnetwork.jpstudy.application.dto.CustomPageResponse;
 @RestController
 @RequestMapping("/api/admin/kanji")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminKanjiController {
 
-    private final AdminKanjiService adminKanjiService;
+    private final KanjiService kanjiService;
 
     /**
      * 한자 생성 (단일)
@@ -34,7 +34,7 @@ public class AdminKanjiController {
      */
     @PostMapping
     public ResponseEntity<KanjiResponse> createKanji(@RequestBody KanjiRequest kanjiRequest) {
-        KanjiResponse response = adminKanjiService.createKanji(kanjiRequest);
+        KanjiResponse response = kanjiService.createKanji(kanjiRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -44,7 +44,7 @@ public class AdminKanjiController {
      */
     @PostMapping("/mult")
     public ResponseEntity<List<KanjiResponse>> createKanjis(@RequestBody List<KanjiRequest> kanjiRequests) {
-        List<KanjiResponse> responses = adminKanjiService.createOrUpdateKanjisFromCSV(kanjiRequests);
+        List<KanjiResponse> responses = kanjiService.createOrUpdateKanjisFromCSV(kanjiRequests);
         return ResponseEntity.status(HttpStatus.CREATED).body(responses);
     }
 
@@ -59,7 +59,7 @@ public class AdminKanjiController {
             @RequestParam(required = false) String keyword,
             @PageableDefault(size = 10) Pageable pageable) {
 
-        CustomPageResponse<KanjiResponse> kanjiPage = adminKanjiService.getKanjis(keyword, pageable);
+        CustomPageResponse<KanjiResponse> kanjiPage = kanjiService.getKanjis(keyword, pageable);
         return ResponseEntity.ok(kanjiPage);
     }
 
@@ -69,7 +69,7 @@ public class AdminKanjiController {
      */
     @PutMapping
     public ResponseEntity<KanjiResponse> updateKanji(@RequestBody KanjiRequest kanjiRequest) {
-        KanjiResponse response = adminKanjiService.updateKanji(kanjiRequest);
+        KanjiResponse response = kanjiService.updateKanji(kanjiRequest);
         return ResponseEntity.ok(response);
     }
 
@@ -79,7 +79,7 @@ public class AdminKanjiController {
      */
     @DeleteMapping
     public ResponseEntity<Void> deleteKanji(@RequestBody KanjiRequest kanjiRequest) {
-        adminKanjiService.deleteKanji(kanjiRequest);
+        kanjiService.deleteKanji(kanjiRequest);
         return ResponseEntity.noContent().build();
     }
 }
