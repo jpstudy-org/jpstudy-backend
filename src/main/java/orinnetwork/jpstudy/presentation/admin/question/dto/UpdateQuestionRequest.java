@@ -1,6 +1,7 @@
-package orinnetwork.jpstudy.presentation.question.dto;
+package orinnetwork.jpstudy.presentation.admin.question.dto;
 
 import java.util.List;
+import orinnetwork.jpstudy.domain.questionbank.Choice;
 
 public record UpdateQuestionRequest(
         Long levelId,
@@ -9,7 +10,7 @@ public record UpdateQuestionRequest(
         String passage,
         String audioUrl,
         String explanation,
-        List<ChoiceDto> choices
+        List<Choice> choices
 ) {
     public record ChoiceDto(
             String choiceText,
