@@ -1,4 +1,4 @@
-package orinnetwork.jpstudy.presentation.question.dto;
+package orinnetwork.jpstudy.presentation.admin.question.dto;
 
 import java.util.List;
 
