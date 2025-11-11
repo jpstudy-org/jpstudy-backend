@@ -1,4 +1,4 @@
-package orinnetwork.jpstudy.application.question.dto;
+package orinnetwork.jpstudy.application.admin.question.dto;
 
 public record CreateExamRequest(
         Long levelId,
