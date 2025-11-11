@@ -1,10 +1,10 @@
-package orinnetwork.jpstudy.application.question.dto;
+package orinnetwork.jpstudy.application.admin.question.dto;
 
 import java.util.List;
 import orinnetwork.jpstudy.domain.questionbank.Choice;
 import orinnetwork.jpstudy.domain.questionbank.Question;
 
-public record QuestionResultDto(
+public record QuestionResult(
         Long questionId,
         String questionText,
         String passage,
@@ -19,7 +19,7 @@ public record QuestionResultDto(
             boolean isCorrect
     ) {}
 
-    public static QuestionResultDto fromEntity(Question question) {
+    public static QuestionResult fromEntity(Question question) {
         List<ChoiceResultDto> choiceResultDtos = question.getChoices().stream()
                 .map(choice -> new ChoiceResultDto(choice.getId(), choice.getChoiceText(), choice.isCorrect()))
                 .toList();
@@ -30,7 +30,7 @@ public record QuestionResultDto(
                 .map(Choice::getId)
                 .orElse(null);
 
-        return new QuestionResultDto(
+        return new QuestionResult(
                 question.getId(),
                 question.getQuestionText(),
                 question.getPassage(),
