@@ -6,16 +6,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import orinnetwork.jpstudy.application.admin.dictionary.word.AdminWordService;
+import orinnetwork.jpstudy.application.admin.dictionary.word.WordService;
 import orinnetwork.jpstudy.application.admin.dictionary.word.dto.WordRequest;
 import orinnetwork.jpstudy.application.admin.dictionary.word.dto.WordResponse;
 import orinnetwork.jpstudy.application.dto.CustomPageResponse;
@@ -23,9 +23,10 @@ import orinnetwork.jpstudy.application.dto.CustomPageResponse;
 @RestController
 @RequestMapping("/api/admin/word")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminWordController {
 
-    private final AdminWordService adminWordService;
+    private final WordService wordService;
 
     /**
      * 단어 생성 (단일)
@@ -33,7 +34,7 @@ public class AdminWordController {
      */
     @PostMapping
     public ResponseEntity<WordResponse> createWord(@RequestBody WordRequest wordRequest) {
-        WordResponse response = adminWordService.createWord(wordRequest);
+        WordResponse response = wordService.createWord(wordRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -44,7 +45,7 @@ public class AdminWordController {
      */
     @PostMapping("/mult")
     public ResponseEntity<List<WordResponse>> createWords(@RequestBody List<WordRequest> wordRequests) {
-        List<WordResponse> responses = adminWordService.createOrUpdateWords(wordRequests);
+        List<WordResponse> responses = wordService.createOrUpdateWords(wordRequests);
         return ResponseEntity.status(HttpStatus.CREATED).body(responses);
     }
 
@@ -58,7 +59,7 @@ public class AdminWordController {
             @RequestParam(required = false) String keyword,
             @PageableDefault(size = 10) Pageable pageable) {
 
-        CustomPageResponse<WordResponse> wordPage = adminWordService.getWords(keyword, pageable);
+        CustomPageResponse<WordResponse> wordPage = wordService.getWords(keyword, pageable);
         return ResponseEntity.ok(wordPage);
     }
 
@@ -68,7 +69,7 @@ public class AdminWordController {
      */
     @PutMapping
     public ResponseEntity<WordResponse> updateWord(@RequestBody WordRequest wordRequest) {
-        WordResponse response = adminWordService.updateWord(wordRequest);
+        WordResponse response = wordService.updateWord(wordRequest);
         return ResponseEntity.ok(response);
     }
 
@@ -79,7 +80,7 @@ public class AdminWordController {
      */
     @DeleteMapping
     public ResponseEntity<Void> deleteWord(@RequestBody WordRequest wordRequest) {
-        adminWordService.deleteWord(wordRequest);
+        wordService.deleteWord(wordRequest);
         return ResponseEntity.noContent().build();
     }
 }

@@ -20,8 +20,7 @@ import orinnetwork.jpstudy.domain.word.WordRepository;
 
 @Service
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
-public class AdminWordService {
+public class WordService {
 
     private final WordRepository wordRepository;
     private final KanjiRepository kanjiRepository;
