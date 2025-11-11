@@ -16,8 +16,7 @@ import orinnetwork.jpstudy.domain.kanji.KanjiRepository;
 
 @Service
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
-public class AdminKanjiService {
+public class KanjiService {
 
     private final KanjiRepository kanjiRepository;
 

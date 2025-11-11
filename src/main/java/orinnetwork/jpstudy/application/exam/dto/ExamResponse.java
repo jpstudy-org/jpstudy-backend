@@ -1,18 +1,18 @@
 package orinnetwork.jpstudy.application.exam.dto;
 
 import java.util.List;
-import orinnetwork.jpstudy.application.question.dto.QuestionResponseDto;
+import orinnetwork.jpstudy.application.admin.question.dto.QuestionResponse;
 import orinnetwork.jpstudy.domain.exam.Exam;
 
-public record ExamResponseDto(
+public record ExamResponse(
         Long examId,
         String title,
         String levelName,
         int totalTimeMinutes,
-        List<QuestionResponseDto> questions
+        List<QuestionResponse> questions
 ) {
-    public static ExamResponseDto of(Exam exam, List<QuestionResponseDto> questions) {
-        return new ExamResponseDto(
+    public static ExamResponse of(Exam exam, List<QuestionResponse> questions) {
+        return new ExamResponse(
                 exam.getId(),
                 exam.getTitle(),
                 exam.getLevel().getName(),
