@@ -22,4 +22,8 @@ public class LocalMember extends Member {
     public String getPassword() {
         return this.password;
     }
+
+    public void updatePassword(String newPassword) {
+        this.password = newPassword;
+    }
 }
