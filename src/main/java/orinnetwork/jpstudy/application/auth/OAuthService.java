@@ -52,6 +52,10 @@ public class OAuthService {
 
         OauthMember member = saveOrUpdate(oAuth2User, requestDto.getProvider());
 
+        if (member.getDeletedAt() != null) {
+            throw new IllegalArgumentException("탈퇴한 회원입니다");
+        }
+
         String accessToken = jwtProvider.createAccessToken(member.getId(), member.getRole());
         String refreshToken = jwtProvider.createRefreshToken(member.getId());
         String memberId = member.getId().toString();

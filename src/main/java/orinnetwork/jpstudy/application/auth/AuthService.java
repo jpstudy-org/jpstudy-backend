@@ -80,6 +80,11 @@ public class AuthService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+
+        if (!userDetails.isEnabled()) {
+            throw new IllegalArgumentException("탈퇴한 회원입니다");
+        }
+
         Long memberId = userDetails.getMemberId();
         Role role = userDetails.getMember().getRole();
         String userName = userDetails.getUsername();
