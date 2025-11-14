@@ -1,6 +1,7 @@
 package orinnetwork.jpstudy.application.member.dto;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -8,6 +9,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class MemberUpdateRequest {
 
-    @NotNull(message = "닉네임은 비워둘 수 없습니다")
     private String username;
+
+    @Pattern(regexp = "^(kr|jp|en)$", message = "지원되지 않는 언어 코드입니다.")
+    private String languagePreference;
+
+    public MemberUpdateRequest(String username, String languagePreference) {
+        this.username = username;
+        this.languagePreference = languagePreference;
+    }
 }

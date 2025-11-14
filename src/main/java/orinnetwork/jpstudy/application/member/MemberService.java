@@ -1,8 +1,10 @@
 package orinnetwork.jpstudy.application.member;
 
+import io.netty.util.internal.StringUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import orinnetwork.jpstudy.application.member.dto.MemberProfileResponse;
 import orinnetwork.jpstudy.application.member.dto.MemberUpdateRequest;
 import orinnetwork.jpstudy.domain.member.Member;
@@ -33,7 +35,13 @@ public class MemberService {
         Member member = memberRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        member.updateProfile(request.getUsername());
+        if (StringUtils.hasText(request.getUsername())) {
+            member.updateProfile(request.getUsername());
+        }
+
+        if (StringUtils.hasText(request.getLanguagePreference())) {
+            member.updateLanguagePreference(request.getLanguagePreference());
+        }
     }
 
 
