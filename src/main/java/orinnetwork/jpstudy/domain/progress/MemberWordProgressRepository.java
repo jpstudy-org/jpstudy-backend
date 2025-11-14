@@ -13,8 +13,9 @@ public interface MemberWordProgressRepository extends JpaRepository<MemberWordPr
 
     Optional<MemberWordProgress> findByMemberAndWord(Member member, Word word);
 
-    @Query("SELECT p FROM MemberWordProgress p "
-            + "JOIN FETCH p.word k "
+    @Query("SELECT DISTINCT p FROM MemberWordProgress p "
+            + "JOIN FETCH p.word w "
+            + "LEFT JOIN FETCH w.meanings m "
             + "WHERE p.member = :member "
             + "AND p.nextReviewAt <= :now "
             + "AND p.masteryLevel != 'MASTERED'")
