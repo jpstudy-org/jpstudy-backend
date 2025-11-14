@@ -20,10 +20,13 @@ public interface WordRepository extends JpaRepository<Word, Long> {
     Page<Word> findAllByDeletedAtIsNull(Pageable pageable);
 
     // 활성 단어 키워드 검색
-    @Query("SELECT w FROM Word w WHERE w.deletedAt IS NULL AND (" +
-            "w.term LIKE %:keyword% OR " +
-            "w.reading LIKE %:keyword% OR " +
-            "w.meaning LIKE %:keyword%)")
+    @Query("SELECT DISTINCT w FROM Word w " +
+            "LEFT JOIN w.meanings m " +
+            "WHERE w.deletedAt IS NULL AND (" +
+            "w.term LIKE CONCAT('%', :keyword, '%') OR " +
+            "w.reading LIKE CONCAT('%', :keyword, '%') OR " +
+            "m.meaningKr LIKE CONCAT('%', :keyword, '%') OR " +
+            "m.meaningEn LIKE CONCAT('%', :keyword, '%'))")
     Page<Word> searchActiveByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
     @Query("SELECT DISTINCT w FROM Word w "

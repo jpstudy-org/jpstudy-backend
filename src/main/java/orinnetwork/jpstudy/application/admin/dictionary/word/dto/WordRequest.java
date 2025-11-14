@@ -16,10 +16,9 @@ public class WordRequest {
     @NotBlank(message = "읽는 법 입력은 필수입니다")
     private String reading;
 
-    @NotBlank(message = "뜻 입력은 필수입니다")
-    private String meaning;
+    private List<MeaningRequest> meanings;
 
-    private String meaningEn;
+    private List<TagRequest> tags;
 
     @NotNull(message = "레벨 입력은 필수입니다.")
     private int level;

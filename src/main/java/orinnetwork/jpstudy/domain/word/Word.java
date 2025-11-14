@@ -1,5 +1,6 @@
 package orinnetwork.jpstudy.domain.word;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -31,13 +32,6 @@ public class Word {
     @Column(nullable = false)
     private String reading;
 
-    // 뜻 (한국어)
-    @Column(nullable = false)
-    private String meaning;
-
-    // 뜻 (영어)
-    private String meaningEn;
-
     @Column(nullable = false)
     private int level;
 
@@ -45,15 +39,20 @@ public class Word {
     @OneToMany(mappedBy = "word")
     private List<WordKanji> wordKanjis = new ArrayList<>();
 
+    // 단어 뜻 (여러 개 일 수 있음)
+    @OneToMany(mappedBy = "word", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Meaning> meanings = new ArrayList<>();
+
+    @OneToMany(mappedBy = "word", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<WordTag> wordTags = new ArrayList<>();
+
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
     @Builder
-    public Word(String term, String reading, String meaning, String meaningEn, int level) {
+    public Word(String term, String reading, int level) {
         this.term = term;
         this.reading = reading;
-        this.meaning = meaning;
-        this.meaningEn = meaningEn;
         this.level = level;
     }
 
@@ -65,10 +64,25 @@ public class Word {
         this.deletedAt = null;
     }
 
-    public void updateDetails(String reading, String meaning, String meaningEn, int level) {
+    public void updateDetails(String reading, int level) {
         this.reading = reading;
-        this.meaning = meaning;
-        this.meaningEn = meaningEn;
         this.level = level;
+    }
+
+    public void addMeaning(Meaning meaning) {
+        this.meanings.add(meaning);
+        meaning.setWord(this);
+    }
+
+    public void clearMeanings() {
+        this.meanings.clear();
+    }
+
+    public void addWordTag(WordTag wordTag) {
+        this.wordTags.add(wordTag);
+    }
+
+    public void clearWordTags() {
+        this.wordTags.clear();
     }
 }

@@ -8,15 +8,23 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import orinnetwork.jpstudy.application.admin.dictionary.word.dto.MeaningRequest;
+import orinnetwork.jpstudy.application.admin.dictionary.word.dto.TagRequest;
 import orinnetwork.jpstudy.application.admin.dictionary.word.dto.WordRequest;
 import orinnetwork.jpstudy.application.admin.dictionary.word.dto.WordResponse;
 import orinnetwork.jpstudy.application.dto.CustomPageResponse;
 import orinnetwork.jpstudy.domain.kanji.Kanji;
 import orinnetwork.jpstudy.domain.kanji.KanjiRepository;
+import orinnetwork.jpstudy.domain.word.Meaning;
+import orinnetwork.jpstudy.domain.word.MeaningRepository;
+import orinnetwork.jpstudy.domain.word.Tag;
+import orinnetwork.jpstudy.domain.word.TagRepository;
 import orinnetwork.jpstudy.domain.word.Word;
 import orinnetwork.jpstudy.domain.word.WordKanji;
 import orinnetwork.jpstudy.domain.word.WordKanjiRepository;
 import orinnetwork.jpstudy.domain.word.WordRepository;
+import orinnetwork.jpstudy.domain.word.WordTag;
+import orinnetwork.jpstudy.domain.word.WordTagRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +33,9 @@ public class WordService {
     private final WordRepository wordRepository;
     private final KanjiRepository kanjiRepository;
     private final WordKanjiRepository wordKanjiRepository;
+    private final MeaningRepository meaningRepository;
+    private final TagRepository tagRepository;
+    private final WordTagRepository wordTagRepository;
 
     // 단어 생성 (단일)
     @Transactional
@@ -36,13 +47,13 @@ public class WordService {
         Word newWord = Word.builder()
                 .term(request.getTerm())
                 .reading(request.getReading())
-                .meaning(request.getMeaning())
-                .meaningEn(request.getMeaningEn())
                 .level(request.getLevel())
                 .build();
         Word savedWord = wordRepository.save(newWord);
 
+        linkMeaningsToWord(savedWord, request.getMeanings());
         linkKanjisToWord(savedWord, foundKanjis);
+        linkTagsToWord(savedWord, request.getTags());
 
         return WordResponse.from(savedWord);
     }
@@ -59,26 +70,29 @@ public class WordService {
             List<Kanji> foundKanji = findAndValidateKanjis(req.getKanjiCharacters());
 
             Word savedWord;
-            if (word != null) {
-                word.updateDetails(req.getReading(), req.getMeaning(), req.getMeaningEn(), req.getLevel());
+            if (word != null) { // 수정
+                word.updateDetails(req.getReading(), req.getLevel());
                 word.restore();
 
+                clearMeanings(word);
                 clearKanjiLinks(word);
+                clearTagLinks(word);
+
                 savedWord = word;
-            } else {
+            } else { // 추가
                 validateDuplicateWord(req.getTerm());
                 Word newWord = Word.builder()
                         .term(req.getTerm())
                         .reading(req.getReading())
-                        .meaning(req.getMeaning())
-                        .meaningEn(req.getMeaningEn())
                         .level(req.getLevel())
                         .build();
 
                 savedWord = wordRepository.save(newWord);
             }
-
+            linkMeaningsToWord(savedWord, req.getMeanings());
             linkKanjisToWord(savedWord, foundKanji);
+            linkTagsToWord(savedWord, req.getTags());
+
             responses.add(WordResponse.from(savedWord));
         }
         return responses;
@@ -102,10 +116,15 @@ public class WordService {
 
         List<Kanji> foundKanjis = findAndValidateKanjis(request.getKanjiCharacters());
 
-        word.updateDetails(request.getReading(), request.getMeaning(), request.getMeaningEn(), request.getLevel());
+        word.updateDetails(request.getReading(), request.getLevel());
 
+        clearMeanings(word);
         clearKanjiLinks(word);
+        clearTagLinks(word);
+
+        linkMeaningsToWord(word, request.getMeanings());
         linkKanjisToWord(word, foundKanjis);
+        linkTagsToWord(word, request.getTags());
 
         return WordResponse.from(word);
     }
@@ -144,9 +163,21 @@ public class WordService {
         return characters.stream()
                 .map(character -> kanjiRepository.findByCharacterAndDeletedAtIsNull(character)
                         // 3. DB에 없는 한자가 요청되면 즉시 예외 발생
-                        .orElseThrow(() -> new IllegalArgumentException(
-                                "한자 사전에 등록되지 않은 한자입니다: '" + character + "'. 한자를 먼저 등록해주세요."
-                        )))
+                        .orElseGet(() -> {
+                            Kanji provissionalKanji = Kanji.builder()
+                                    .character(character)
+                                    .meaning("(미확인)")
+                                    .meaningEn("(미확인)")
+                                    .onyomi("(미확인)")
+                                    .kunyomi("(미확인)")
+                                    .strokeCount(0)
+                                    .radical("(미확인)")
+                                    .level(0)
+                                    .build();
+
+                            return kanjiRepository.save(provissionalKanji);
+                        })
+                )
                 .toList();
     }
 
@@ -163,5 +194,49 @@ public class WordService {
     private void clearKanjiLinks(Word word) {
         wordKanjiRepository.deleteAllByWord(word); // DB에서 삭제
         word.getWordKanjis().clear(); // 엔티티(1차 캐시)에서도 삭제
+    }
+
+    private void linkMeaningsToWord(Word word, List<MeaningRequest> meaningRequests) {
+        if (meaningRequests == null || meaningRequests.isEmpty()) {
+            return;
+        }
+
+        for (MeaningRequest req : meaningRequests) {
+            Meaning meaning = Meaning.builder()
+                    .meaningKr(req.getMeaningKr())
+                    .meaningEn(req.getMeaningEn())
+                    .build();
+
+            word.addMeaning(meaning);
+        }
+    }
+
+    // 단어 수정 시 기존 Meaning 연결 해제
+    private void clearMeanings(Word word) {
+        meaningRepository.deleteAllByWord(word);
+        word.getMeanings().clear();
+    }
+
+    private void linkTagsToWord(Word word, List<TagRequest> tagNames) {
+        if (tagNames.isEmpty()) {
+            return;
+        }
+
+        for (TagRequest tagName : tagNames) {
+            Tag tag = tagRepository.findByName(tagName.getTag())
+                    .orElseGet(() -> {
+                        Tag newTag = Tag.builder().name(tagName.getTag()).build();
+                        return tagRepository.save(newTag);
+                    });
+
+            WordTag wordTag = new WordTag(word, tag);
+            wordTagRepository.save(wordTag);
+            word.getWordTags().add(wordTag);
+        }
+    }
+
+    private void clearTagLinks(Word word) {
+        wordTagRepository.deleteAllByWord(word);
+        word.getWordTags().clear();
     }
 }
