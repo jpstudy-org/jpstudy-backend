@@ -1,0 +1,2 @@
+ALTER TABLE meaning ALTER COLUMN meaning_kr TYPE TEXT;
+ALTER TABLE meaning ALTER COLUMN meaning_en TYPE TEXT;
