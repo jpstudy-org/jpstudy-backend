@@ -32,6 +32,10 @@ public class TestAttempt {
     @ManyToOne(fetch = FetchType.LAZY)
     private Exam exam;
 
+    public enum AttemptStatus {
+        IN_PROGRESS, COMPLETED
+    }
+
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private Integer score;
@@ -47,7 +51,9 @@ public class TestAttempt {
         this.status = AttemptStatus.IN_PROGRESS;
     }
 
-    public enum AttemptStatus {
-        IN_PROGRESS, COMPLETED
+    public void complete(Integer score) {
+        this.status = AttemptStatus.COMPLETED;
+        this.endTime = LocalDateTime.now();
+        this.score = score;
     }
 }

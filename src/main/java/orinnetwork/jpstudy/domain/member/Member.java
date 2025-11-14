@@ -47,6 +47,9 @@ public abstract class Member extends BaseEntity {
     @Column(nullable = false)
     private long experience = 0;
 
+    @Column(length = 5, nullable = false)
+    private String languagePreference = "kr";
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "grade_id")
     private MemberGrade grade;
@@ -69,6 +72,10 @@ public abstract class Member extends BaseEntity {
 
     public void updateProfile(String username) {
         this.username = username;
+    }
+
+    public void updateLanguagePreference(String languagePreference) {
+        this.languagePreference = languagePreference;
     }
 
     /**

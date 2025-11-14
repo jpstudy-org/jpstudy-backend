@@ -34,18 +34,20 @@ public class WordProgressService {
         LocalDateTime now = LocalDateTime.now();
         Member member = memberRepository.getReferenceById(memberId);
 
+        final String lang = member.getLanguagePreference();
+
         List<MemberWordProgress> reviewProgressList = progressRepository
                 .findDueForReview(member, now);
 
         List<WordCardDto> reviewCards = reviewProgressList.stream()
-                .map(progress -> new WordCardDto(progress.getWord()))
+                .map(progress -> new WordCardDto(progress.getWord(), lang))
                 .toList();
 
         List<Word> newWordList = wordRepository
                 .findNewWordForMember(memberId, PageRequest.of(0, NEW_CARDS_PER_SESSION));
 
         List<WordCardDto> newCards = newWordList.stream()
-                .map(WordCardDto::new)
+                .map(word -> new WordCardDto(word, lang))
                 .toList();
 
         return new StudySessionResponse(reviewCards, newCards);

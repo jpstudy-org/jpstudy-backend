@@ -1,9 +1,9 @@
 package orinnetwork.jpstudy.application.auth;
 
 import jakarta.transaction.Transactional;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -13,11 +13,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import orinnetwork.jpstudy.application.auth.dto.LoginRequestDto;
+import orinnetwork.jpstudy.application.auth.dto.PasswordResetConfirm;
+import orinnetwork.jpstudy.application.auth.dto.PasswordResetRequest;
 import orinnetwork.jpstudy.application.auth.dto.SignUpRequestDto;
 import orinnetwork.jpstudy.application.auth.dto.TokenResponseDto;
 import orinnetwork.jpstudy.domain.member.LocalMember;
 import orinnetwork.jpstudy.domain.member.Member;
 import orinnetwork.jpstudy.domain.member.Role;
+import orinnetwork.jpstudy.infrastructure.email.EmailService;
 import orinnetwork.jpstudy.infrastructure.jwt.JwtProvider;
 import orinnetwork.jpstudy.domain.member.MemberRepository;
 import orinnetwork.jpstudy.infrastructure.security.CustomUserDetails;
@@ -35,6 +38,10 @@ public class AuthService {
 
     private final RedisTemplate<String, String> redisTemplate;
     private static final String REFRESH_TOKEN_PREFIX = "RT:";
+
+    private final EmailService emailService;
+    private static final String RESET_TOKEN_PREFIX = "RESET_TOKEN:";
+    private static final long RESET_TOKEN_EXPIRATION_MINUTES = 15;
 
     public TokenResponseDto signUp(SignUpRequestDto requestDto) {
         final String encryptedPassword = passwordEncoder.encode(requestDto.getPassword());
@@ -134,5 +141,43 @@ public class AuthService {
         long refreshTokenValidityMs = jwtProvider.getRefreshTokenValidityInMilliseconds();
 
         return new TokenResponseDto(newAccessToken, clientRefreshToken, userName, refreshTokenValidityMs);
+    }
+
+    public void requestPasswordReset(PasswordResetRequest request) {
+        Member member = memberRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        String resetToken = UUID.randomUUID().toString();
+        String redisKey = RESET_TOKEN_PREFIX + resetToken;
+
+        redisTemplate.opsForValue().set(
+                redisKey,
+                member.getEmail(),
+                RESET_TOKEN_EXPIRATION_MINUTES,
+                TimeUnit.MINUTES
+        );
+
+        emailService.sendPasswordResetLink(member.getEmail(), resetToken);
+    }
+
+    public void confirmPasswordReset(PasswordResetConfirm request) {
+        String redisKey = RESET_TOKEN_PREFIX + request.getToken();
+
+        String userEmail = redisTemplate.opsForValue().get(redisKey);
+
+        if (userEmail == null) {
+            throw new IllegalArgumentException("유효하지 않거나 만료된 토큰입니다.");
+        }
+
+        Member member = memberRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        if (member instanceof LocalMember localMember) {
+            localMember.updatePassword(passwordEncoder.encode(request.getNewPassword()));
+        } else {
+            throw new IllegalArgumentException("비밀번호를 변경할 수 없는 타입입니다.");
+        }
+
+        redisTemplate.delete(redisKey);
     }
 }

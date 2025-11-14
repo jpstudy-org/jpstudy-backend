@@ -16,6 +16,8 @@ import orinnetwork.jpstudy.application.auth.AuthService;
 import orinnetwork.jpstudy.application.auth.OAuthService;
 import orinnetwork.jpstudy.application.auth.dto.LoginRequestDto;
 import orinnetwork.jpstudy.application.auth.dto.OAuthLoginRequestDto;
+import orinnetwork.jpstudy.application.auth.dto.PasswordResetConfirm;
+import orinnetwork.jpstudy.application.auth.dto.PasswordResetRequest;
 import orinnetwork.jpstudy.application.auth.dto.SignUpRequestDto;
 import orinnetwork.jpstudy.application.auth.dto.TokenResponseDto;
 import orinnetwork.jpstudy.infrastructure.jwt.JwtProvider;
@@ -80,5 +82,22 @@ public class AuthController {
         TokenResponseDto tokenResponse = authService.reissueToken(refreshToken);
 
         return authResponseHelper.createTokenResponse(tokenResponse, response);
+    }
+
+    @PostMapping("/password-reset-request")
+    public ResponseEntity<Void> requestPasswordReset(
+            @Valid @RequestBody PasswordResetRequest request
+            ) {
+        authService.requestPasswordReset(request);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/password-reset-confirm")
+    public ResponseEntity<Void> confirmPasswordReset(
+            @Valid @RequestBody PasswordResetConfirm request
+            ) {
+        authService.confirmPasswordReset(request);
+        return ResponseEntity.ok().build();
     }
 }

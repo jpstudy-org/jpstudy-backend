@@ -23,7 +23,7 @@ public interface KanjiRepository extends JpaRepository<Kanji, Long> {
     Page<Kanji> searchActiveByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
     @Query("SELECT DISTINCT k FROM Kanji k " +
-            "WHERE k.deletedAt IS NULL AND NOT EXISTS (" +
+            "WHERE k.deletedAt IS NULL AND k.level > 0 AND NOT EXISTS (" +
             "  SELECT 1 FROM MemberKanjiProgress p " +
             "  WHERE p.kanji = k AND p.member.id = :memberId" +
             ") ORDER BY k.level DESC, k.id ASC")

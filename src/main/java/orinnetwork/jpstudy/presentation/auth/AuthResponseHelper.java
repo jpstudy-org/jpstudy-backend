@@ -22,7 +22,7 @@ public class AuthResponseHelper {
             HttpServletResponse response) {
 
         boolean isProduction = Arrays.asList(env.getActiveProfiles()).contains("prod");
-        String cookieDomain = isProduction ? "test.com" : null;
+        String cookieDomain = isProduction ? "jpstudy.org" : null;
 
         ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", tokenDto.getRefreshToken())
                 .httpOnly(true)

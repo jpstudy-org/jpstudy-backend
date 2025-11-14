@@ -20,10 +20,12 @@ public class R2Adapter implements StoragePort {
     private String bucketName;
 
     @Override
-    public GeneratePresignedUrlResponse generatePresignedUrl(String fileName) {
+    public GeneratePresignedUrlResponse generatePresignedUrl(String fileName, long fileSize, String contentType) {
         PutObjectRequest objectRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
                 .key(fileName)
+                .contentLength(fileSize)
+                .contentType(contentType)
                 .build();
 
         PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()

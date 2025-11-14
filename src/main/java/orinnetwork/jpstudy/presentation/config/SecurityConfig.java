@@ -82,6 +82,8 @@ public class SecurityConfig {
                                 "/api/auth/signup",
                                 "/api/auth/reissue",
                                 "/api/auth/oauth-login",
+                                "/api/auth/password-reset-confirm",
+                                "/api/auth/password-reset-request",
 
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",

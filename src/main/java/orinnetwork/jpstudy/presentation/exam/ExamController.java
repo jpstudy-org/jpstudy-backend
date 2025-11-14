@@ -9,8 +9,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import orinnetwork.jpstudy.application.exam.ExamService;
-import orinnetwork.jpstudy.application.exam.dto.ExamResponseDto;
-import orinnetwork.jpstudy.application.question.dto.CreateExamRequest;
+import orinnetwork.jpstudy.application.exam.dto.ExamResponse;
+import orinnetwork.jpstudy.application.admin.question.dto.CreateExamRequest;
+import orinnetwork.jpstudy.application.exam.dto.ExamTakingResponse;
 
 @RestController
 @RequestMapping("/api/exams")
@@ -20,14 +21,14 @@ public class ExamController {
     private final ExamService examService;
 
     @PostMapping
-    public ResponseEntity<ExamResponseDto> createRandomExam(@RequestBody CreateExamRequest request) {
-        ExamResponseDto examResponse = examService.createRandomExam(request);
+    public ResponseEntity<ExamTakingResponse> createRandomExam(@RequestBody CreateExamRequest request) {
+        ExamTakingResponse examResponse = examService.createRandomExam(request);
         return ResponseEntity.ok(examResponse);
     }
 
     @GetMapping("/{examId}")
-    public ResponseEntity<ExamResponseDto> getExam(@PathVariable Long examId) {
-        ExamResponseDto examResponse = examService.getExamDetails(examId);
+    public ResponseEntity<ExamTakingResponse> getExam(@PathVariable Long examId) {
+        ExamTakingResponse examResponse = examService.getExamDetails(examId);
 
         return ResponseEntity.ok(examResponse);
     }

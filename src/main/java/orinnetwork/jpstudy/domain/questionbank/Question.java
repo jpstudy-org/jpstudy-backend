@@ -16,6 +16,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 
 @Entity
 @Getter
@@ -47,11 +48,12 @@ public class Question {
 
     private boolean isAIGenerated;
 
+    @BatchSize(size = 100)
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Choice> choices = new ArrayList<>();
 
     @Builder
-    public Question(Level level, QuestionCategory category, String questionText, String passage, String audioUrl, String explanation, boolean isAIGenerated) {
+    public Question(Level level, QuestionCategory category, String questionText, String passage, String audioUrl, String explanation, boolean isAIGenerated, List<Choice> choices) {
         this.level = level;
         this.category = category;
         this.questionText = questionText;
@@ -59,6 +61,7 @@ public class Question {
         this.audioUrl = audioUrl;
         this.explanation = explanation;
         this.isAIGenerated = isAIGenerated;
+        this.choices = (choices == null) ? new ArrayList<>() : choices;
     }
 
     public void update(Level level, QuestionCategory category, String questionText, String passage, String audioUrl, String explanation) {
