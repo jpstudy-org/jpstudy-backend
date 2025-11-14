@@ -12,11 +12,17 @@ public class KanjiCardDto {
     private final String onyomi;
     private final String kunyomi;
 
-    public KanjiCardDto(Kanji kanji) {
+    public KanjiCardDto(Kanji kanji, String lang) {
         this.kanjiId = kanji.getId();
         this.character = kanji.getCharacter();
-        this.meaning = kanji.getMeaning();
         this.onyomi = kanji.getOnyomi();
         this.kunyomi = kanji.getKunyomi();
+
+        if ("en".equalsIgnoreCase(lang) || "jp".equalsIgnoreCase(lang)) {
+            this.meaning = kanji.getMeaningEn();
+        }
+        else {
+            this.meaning = kanji.getMeaning();
+        }
     }
 }

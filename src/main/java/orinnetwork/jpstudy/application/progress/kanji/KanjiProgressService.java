@@ -34,19 +34,20 @@ public class KanjiProgressService {
     public StudySessionResponse getStudySession(Long memberId) {
         LocalDateTime now = LocalDateTime.now();
         Member member = memberRepository.getReferenceById(memberId);
+        String lang = member.getLanguagePreference();
 
         List<MemberKanjiProgress> reviewProgressList = progressRepository
                 .findDueForReview(member, now);
 
         List<KanjiCardDto> reviewCards = reviewProgressList.stream()
-                .map(progress -> new KanjiCardDto(progress.getKanji()))
+                .map(progress -> new KanjiCardDto(progress.getKanji(), lang))
                 .toList();
 
         List<Kanji> newKanjiList = kanjiRepository
                 .findNewKanjiForMember(memberId, PageRequest.of(0, NEW_CARDS_PER_SESSION));
 
         List<KanjiCardDto> newCards = newKanjiList.stream()
-                .map(KanjiCardDto::new)
+                .map(kanji -> new KanjiCardDto(kanji, lang))
                 .toList();
 
         return new StudySessionResponse(reviewCards, newCards);

@@ -43,6 +43,8 @@ public class WordProgressService {
                 .map(progress -> new WordCardDto(progress.getWord(), lang))
                 .toList();
 
+
+
         List<Word> newWordList = wordRepository
                 .findNewWordForMember(memberId, PageRequest.of(0, NEW_CARDS_PER_SESSION));
 

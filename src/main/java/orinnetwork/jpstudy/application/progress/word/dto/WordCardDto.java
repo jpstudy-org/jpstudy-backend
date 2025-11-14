@@ -18,7 +18,7 @@ public class WordCardDto {
         this.term = word.getTerm();
         this.reading = word.getReading();
 
-        if ("en".equalsIgnoreCase(lang)) {
+        if ("en".equalsIgnoreCase(lang) || "jp".equalsIgnoreCase(lang)) {
             this.meanings = word.getMeanings().stream()
                     .map(Meaning::getMeaningEn)
                     .toList();

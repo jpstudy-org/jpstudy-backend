@@ -14,6 +14,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 
 @Entity
 @Getter
@@ -40,6 +41,7 @@ public class Word {
     private List<WordKanji> wordKanjis = new ArrayList<>();
 
     // 단어 뜻 (여러 개 일 수 있음)
+    @BatchSize(size = 100)
     @OneToMany(mappedBy = "word", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Meaning> meanings = new ArrayList<>();
 
