@@ -9,12 +9,14 @@ import orinnetwork.jpstudy.application.member.dto.MemberProfileResponse;
 import orinnetwork.jpstudy.application.member.dto.MemberUpdateRequest;
 import orinnetwork.jpstudy.domain.member.Member;
 import orinnetwork.jpstudy.domain.member.MemberRepository;
+import orinnetwork.jpstudy.domain.member.UsernameValidator;
 
 @Service
 @RequiredArgsConstructor
 public class MemberService {
 
     private final MemberRepository memberRepository;
+    private final UsernameValidator usernameValidator;
 
 
     /**
@@ -36,6 +38,7 @@ public class MemberService {
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         if (StringUtils.hasText(request.getUsername())) {
+            usernameValidator.validate(request.getUsername());
             member.updateProfile(request.getUsername());
         }
 
