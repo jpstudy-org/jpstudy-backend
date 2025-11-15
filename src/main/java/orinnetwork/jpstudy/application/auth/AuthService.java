@@ -1,11 +1,14 @@
 package orinnetwork.jpstudy.application.auth;
 
 import jakarta.transaction.Transactional;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
@@ -20,6 +23,7 @@ import orinnetwork.jpstudy.application.auth.dto.TokenResponseDto;
 import orinnetwork.jpstudy.domain.member.LocalMember;
 import orinnetwork.jpstudy.domain.member.Member;
 import orinnetwork.jpstudy.domain.member.Role;
+import orinnetwork.jpstudy.domain.member.UsernameValidator;
 import orinnetwork.jpstudy.infrastructure.email.EmailService;
 import orinnetwork.jpstudy.infrastructure.jwt.JwtProvider;
 import orinnetwork.jpstudy.domain.member.MemberRepository;
@@ -35,6 +39,7 @@ public class AuthService {
     private final JwtProvider jwtProvider;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final AuthenticationManager authenticationManager;
+    private final UsernameValidator usernameValidator;
 
     private final RedisTemplate<String, String> redisTemplate;
     private static final String REFRESH_TOKEN_PREFIX = "RT:";
@@ -43,7 +48,14 @@ public class AuthService {
     private static final String RESET_TOKEN_PREFIX = "RESET_TOKEN:";
     private static final long RESET_TOKEN_EXPIRATION_MINUTES = 15;
 
+    private static final String LOGIN_FAIL_PREFIX = "LOGIN_FAIL:";
+    private static final int MAX_LOGIN_ATTEMPTS = 5;
+    private static final long LOCKOUT_DURATION_MINUTES = 10;
+
     public TokenResponseDto signUp(SignUpRequestDto requestDto) {
+
+        usernameValidator.validate(requestDto.getUsername());
+
         final String encryptedPassword = passwordEncoder.encode(requestDto.getPassword());
         final LocalMember newMember = new LocalMember(
                 requestDto.getEmail(),
@@ -72,10 +84,44 @@ public class AuthService {
     }
 
     public TokenResponseDto login(LoginRequestDto requestDto) {
+
+        String lockoutKey = LOGIN_FAIL_PREFIX + requestDto.getEmail();
+        String currentFailCountStr = redisTemplate.opsForValue().get(lockoutKey);
+
+        if (currentFailCountStr != null) {
+            int failCount = Integer.parseInt(currentFailCountStr);
+            if (failCount >= MAX_LOGIN_ATTEMPTS) {
+                Long expireTimeMinutes = redisTemplate.getExpire(lockoutKey, TimeUnit.MINUTES);
+                String message = String.format("Password Error to %d. Please %d minute.",
+                        MAX_LOGIN_ATTEMPTS, expireTimeMinutes > 0 ? expireTimeMinutes + 1 : LOCKOUT_DURATION_MINUTES);
+
+                throw new LockedException(message);
+            }
+        }
+
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(requestDto.getEmail(), requestDto.getPassword());
 
-        Authentication authentication = authenticationManager.authenticate(authenticationToken);
+        Authentication authentication;
+
+        try {
+            authentication = authenticationManager.authenticate(authenticationToken);
+        } catch (BadCredentialsException e) {
+            Long newFailCount = redisTemplate.opsForValue().increment(lockoutKey);
+
+            if (newFailCount != null && newFailCount == 1) {
+                redisTemplate.expire(lockoutKey, LOCKOUT_DURATION_MINUTES, TimeUnit.MINUTES);
+            }
+            if (newFailCount != null && newFailCount >= MAX_LOGIN_ATTEMPTS) {
+                throw new LockedException(String.format("Password Error to %d. Please 10 minute.", MAX_LOGIN_ATTEMPTS));
+            } else {
+                throw new BadCredentialsException("Failed Password");
+            }
+        }
+
+        if (currentFailCountStr != null) {
+            redisTemplate.delete(lockoutKey);
+        }
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
