@@ -55,6 +55,10 @@ public class CustomUserDetails implements UserDetails {
         return member.getDeletedAt() != null;
     }
 
+    public String getLanguage() {
+        return member.getLanguagePreference();
+    }
+
     // 이 메서드를 통해 엔티티의 ID를 바로 가져올 수 있습니다. (인증 후 활용 목적)
     public Long getMemberId() {
         return member.getId();
