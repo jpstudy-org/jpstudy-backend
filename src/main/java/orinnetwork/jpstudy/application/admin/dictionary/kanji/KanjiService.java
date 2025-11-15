@@ -114,7 +114,7 @@ public class KanjiService {
         if (keyword == null || keyword.isBlank()) {
             kanjiPage = kanjiRepository.findAll(pageable);
         } else {
-            kanjiPage = kanjiRepository.searchActiveByKeyword(keyword, pageable);
+            kanjiPage = kanjiRepository.searchAllByKeyword(keyword, pageable);
         }
 
         Page<KanjiResponse> responses = kanjiPage.map(KanjiResponse::from);

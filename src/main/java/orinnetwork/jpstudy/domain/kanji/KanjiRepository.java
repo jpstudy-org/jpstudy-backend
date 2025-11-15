@@ -29,5 +29,13 @@ public interface KanjiRepository extends JpaRepository<Kanji, Long> {
             ") ORDER BY k.level DESC, k.id ASC")
     List<Kanji> findNewKanjiForMember(@Param("memberId") Long memberId, Pageable pageable);
 
+    @Query("SELECT k FROM Kanji k WHERE (" // deletedAt IS NULL 조건 제거
+            + "k.character LIKE %:keyword% OR "
+            + "k.meaning LIKE %:keyword% OR "
+            + "k.meaningEn LIKE %:keyword% OR "
+            + "k.onyomi LIKE %:keyword% OR "
+            + "k.kunyomi LIKE %:keyword%)")
+    Page<Kanji> searchAllByKeyword(@Param("keyword") String keyword, Pageable pageable);
+
     Page<Kanji> findAllByDeletedAtIsNull(Pageable pageable);
 }
