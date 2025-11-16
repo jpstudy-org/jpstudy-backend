@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,11 +30,50 @@ public class AdminAuthservice {
     private final RedisTemplate<String, String> redisTemplate;
     private static final String REFRESH_TOKEN_PREFIX = "RT:";
 
+    private static final String LOGIN_FAIL_PREFIX = "ADMIN_LOGIN_FAIL:"; // 관리자 전용 Prefix
+    private static final int MAX_LOGIN_ATTEMPTS = 5;
+    private static final long LOCKOUT_DURATION_MINUTES = 10;
+
     public TokenResponseDto login(LoginRequestDto requestDto) {
+
+        String lockoutKey = LOGIN_FAIL_PREFIX + requestDto.getEmail();
+        String currentFailCountStr = redisTemplate.opsForValue().get(lockoutKey);
+
+        if (currentFailCountStr != null) {
+            int failCount = Integer.parseInt(currentFailCountStr);
+            if (failCount >= MAX_LOGIN_ATTEMPTS) {
+                long expireTimeMinutes = redisTemplate.getExpire(lockoutKey, TimeUnit.MINUTES);
+                String message = String.format("관리자 로그인 %d회 실패. %d분 후 다시 시도하세요.",
+                        MAX_LOGIN_ATTEMPTS, expireTimeMinutes > 0 ? expireTimeMinutes + 1 : LOCKOUT_DURATION_MINUTES);
+
+                throw new LockedException(message);
+            }
+        }
+
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(requestDto.getEmail(), requestDto.getPassword());
 
-        Authentication authentication = authenticationManager.authenticate(authenticationToken);
+        Authentication authentication;
+
+        try {
+            authentication = authenticationManager.authenticate(authenticationToken);
+        } catch (BadCredentialsException e) {
+            Long newFailCount = redisTemplate.opsForValue().increment(lockoutKey);
+
+            if (newFailCount != null && newFailCount == 1) {
+                redisTemplate.expire(lockoutKey, LOCKOUT_DURATION_MINUTES, TimeUnit.MINUTES);
+            }
+            if (newFailCount != null && newFailCount >= MAX_LOGIN_ATTEMPTS) {
+                throw new LockedException(String.format("관리자 로그인 %d회 실패. %d분 후 다시 시도하세요.", MAX_LOGIN_ATTEMPTS));
+            } else {
+                throw new BadCredentialsException("관리자 계정의 이메일 또는 비밀번호가 틀렸습니다.");
+            }
+        }
+
+        if (currentFailCountStr != null) {
+            redisTemplate.delete(lockoutKey);
+        }
+
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
