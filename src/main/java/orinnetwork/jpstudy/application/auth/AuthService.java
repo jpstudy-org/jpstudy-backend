@@ -1,7 +1,6 @@
 package orinnetwork.jpstudy.application.auth;
 
 import jakarta.transaction.Transactional;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
@@ -10,7 +9,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -37,7 +35,6 @@ public class AuthService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
-    private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final AuthenticationManager authenticationManager;
     private final UsernameValidator usernameValidator;
 
@@ -91,7 +88,7 @@ public class AuthService {
         if (currentFailCountStr != null) {
             int failCount = Integer.parseInt(currentFailCountStr);
             if (failCount >= MAX_LOGIN_ATTEMPTS) {
-                Long expireTimeMinutes = redisTemplate.getExpire(lockoutKey, TimeUnit.MINUTES);
+                long expireTimeMinutes = redisTemplate.getExpire(lockoutKey, TimeUnit.MINUTES);
                 String message = String.format("Password Error to %d. Please %d minute.",
                         MAX_LOGIN_ATTEMPTS, expireTimeMinutes > 0 ? expireTimeMinutes + 1 : LOCKOUT_DURATION_MINUTES);
 
@@ -228,6 +225,9 @@ public class AuthService {
         } else {
             throw new IllegalArgumentException("비밀번호를 변경할 수 없는 타입입니다.");
         }
+
+        String lockoutKey = LOGIN_FAIL_PREFIX + userEmail;
+        redisTemplate.delete(lockoutKey);
 
         redisTemplate.delete(redisKey);
     }
