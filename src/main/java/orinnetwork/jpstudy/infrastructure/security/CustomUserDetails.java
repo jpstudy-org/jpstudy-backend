@@ -52,7 +52,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return member.getDeletedAt() != null;
+        return member.getDeletedAt() == null;
     }
 
     public String getLanguage() {
