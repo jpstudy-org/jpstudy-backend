@@ -226,9 +226,11 @@ public class AuthService {
             throw new IllegalArgumentException("비밀번호를 변경할 수 없는 타입입니다.");
         }
 
-        String lockoutKey = LOGIN_FAIL_PREFIX + userEmail;
-        redisTemplate.delete(lockoutKey);
-
-        redisTemplate.delete(redisKey);
+        // 트랜잭션 롤백 문제?? <= 비번 변경하고 이게 안먹힘
+        try {
+            String lockoutKey = LOGIN_FAIL_PREFIX + userEmail;
+            redisTemplate.delete(lockoutKey);
+            redisTemplate.delete(redisKey);
+        } catch (Exception e) {}
     }
 }
