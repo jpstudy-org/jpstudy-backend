@@ -65,6 +65,10 @@ dependencies {
 
     // Oauth
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+    // actuator
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
 }
 
 tasks.named('test') {
