@@ -48,7 +48,7 @@ public abstract class Member extends BaseEntity {
     private long experience = 0;
 
     @Column(length = 5, nullable = false)
-    private String languagePreference = "kr";
+    private String languagePreference = "en";
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "grade_id")
