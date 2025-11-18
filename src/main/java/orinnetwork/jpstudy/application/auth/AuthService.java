@@ -18,10 +18,12 @@ import orinnetwork.jpstudy.application.auth.dto.PasswordResetConfirm;
 import orinnetwork.jpstudy.application.auth.dto.PasswordResetRequest;
 import orinnetwork.jpstudy.application.auth.dto.SignUpRequestDto;
 import orinnetwork.jpstudy.application.auth.dto.TokenResponseDto;
+import orinnetwork.jpstudy.application.notification.NotificationService;
 import orinnetwork.jpstudy.domain.member.LocalMember;
 import orinnetwork.jpstudy.domain.member.Member;
 import orinnetwork.jpstudy.domain.member.Role;
 import orinnetwork.jpstudy.domain.member.UsernameValidator;
+import orinnetwork.jpstudy.domain.notification.NotificationType;
 import orinnetwork.jpstudy.infrastructure.email.EmailService;
 import orinnetwork.jpstudy.infrastructure.jwt.JwtProvider;
 import orinnetwork.jpstudy.domain.member.MemberRepository;
@@ -38,8 +40,10 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final UsernameValidator usernameValidator;
 
-    private final RedisTemplate<String, String> redisTemplate;
+    private final RedisTemplate<String, String> authRedisTemplate;
     private static final String REFRESH_TOKEN_PREFIX = "RT:";
+
+    private final NotificationService notificationService;
 
     private final EmailService emailService;
     private static final String RESET_TOKEN_PREFIX = "RESET_TOKEN:";
@@ -70,11 +74,18 @@ public class AuthService {
         String redisKey = REFRESH_TOKEN_PREFIX + savedMember.getId().toString();
         long refreshTokenValidityMs = jwtProvider.getRefreshTokenValidityInMilliseconds();
 
-        redisTemplate.opsForValue().set(
+        authRedisTemplate.opsForValue().set(
                 redisKey,
                 refreshToken,
                 refreshTokenValidityMs,
                 TimeUnit.MILLISECONDS
+        );
+
+        notificationService.send(
+                savedMember.getId(),
+                NotificationType.SIGNUP,
+                "서비스에 가입해주셔서 감사합니다",
+                ""
         );
 
         return new TokenResponseDto(accessToken, refreshToken, userName, refreshTokenValidityMs);
@@ -83,12 +94,12 @@ public class AuthService {
     public TokenResponseDto login(LoginRequestDto requestDto) {
 
         String lockoutKey = LOGIN_FAIL_PREFIX + requestDto.getEmail();
-        String currentFailCountStr = redisTemplate.opsForValue().get(lockoutKey);
+        String currentFailCountStr = authRedisTemplate.opsForValue().get(lockoutKey);
 
         if (currentFailCountStr != null) {
             int failCount = Integer.parseInt(currentFailCountStr);
             if (failCount >= MAX_LOGIN_ATTEMPTS) {
-                long expireTimeMinutes = redisTemplate.getExpire(lockoutKey, TimeUnit.MINUTES);
+                long expireTimeMinutes = authRedisTemplate.getExpire(lockoutKey, TimeUnit.MINUTES);
                 String message = String.format("Password Error to %d. Please %d minute.",
                         MAX_LOGIN_ATTEMPTS, expireTimeMinutes > 0 ? expireTimeMinutes + 1 : LOCKOUT_DURATION_MINUTES);
 
@@ -104,10 +115,10 @@ public class AuthService {
         try {
             authentication = authenticationManager.authenticate(authenticationToken);
         } catch (BadCredentialsException e) {
-            Long newFailCount = redisTemplate.opsForValue().increment(lockoutKey);
+            Long newFailCount = authRedisTemplate.opsForValue().increment(lockoutKey);
 
             if (newFailCount != null && newFailCount == 1) {
-                redisTemplate.expire(lockoutKey, LOCKOUT_DURATION_MINUTES, TimeUnit.MINUTES);
+                authRedisTemplate.expire(lockoutKey, LOCKOUT_DURATION_MINUTES, TimeUnit.MINUTES);
             }
             if (newFailCount != null && newFailCount >= MAX_LOGIN_ATTEMPTS) {
                 throw new LockedException(String.format("Password Error to %d. Please 10 minute.", MAX_LOGIN_ATTEMPTS));
@@ -117,7 +128,7 @@ public class AuthService {
         }
 
         if (currentFailCountStr != null) {
-            redisTemplate.delete(lockoutKey);
+            authRedisTemplate.delete(lockoutKey);
         }
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -138,7 +149,7 @@ public class AuthService {
         String redisKey = REFRESH_TOKEN_PREFIX + memberId;
         long refreshTokenValidityMs = jwtProvider.getRefreshTokenValidityInMilliseconds();
 
-        redisTemplate.opsForValue().set(
+        authRedisTemplate.opsForValue().set(
                 redisKey,
                 refreshToken,
                 refreshTokenValidityMs,
@@ -158,8 +169,8 @@ public class AuthService {
         Long memberId = userDetails.getMemberId();
 
         String redisKey = REFRESH_TOKEN_PREFIX + memberId.toString();
-        if (redisTemplate.opsForValue().get(redisKey) != null) {
-            redisTemplate.delete(redisKey);
+        if (authRedisTemplate.opsForValue().get(redisKey) != null) {
+            authRedisTemplate.delete(redisKey);
         }
     }
 
@@ -171,7 +182,7 @@ public class AuthService {
         Long memberId = jwtProvider.getUserId(clientRefreshToken);
 
         String redisKey = REFRESH_TOKEN_PREFIX + memberId.toString();
-        String storedRefreshToken = redisTemplate.opsForValue().get(redisKey);
+        String storedRefreshToken = authRedisTemplate.opsForValue().get(redisKey);
 
         if (storedRefreshToken == null) {
             throw new IllegalArgumentException("로그아웃된 사용자입니다. 다시 로그인하세요.");
@@ -198,7 +209,7 @@ public class AuthService {
         String resetToken = UUID.randomUUID().toString();
         String redisKey = RESET_TOKEN_PREFIX + resetToken;
 
-        redisTemplate.opsForValue().set(
+        authRedisTemplate.opsForValue().set(
                 redisKey,
                 member.getEmail(),
                 RESET_TOKEN_EXPIRATION_MINUTES,
@@ -211,7 +222,7 @@ public class AuthService {
     public void confirmPasswordReset(PasswordResetConfirm request) {
         String redisKey = RESET_TOKEN_PREFIX + request.getToken();
 
-        String userEmail = redisTemplate.opsForValue().get(redisKey);
+        String userEmail = authRedisTemplate.opsForValue().get(redisKey);
 
         if (userEmail == null) {
             throw new IllegalArgumentException("유효하지 않거나 만료된 토큰입니다.");
@@ -229,8 +240,8 @@ public class AuthService {
         // 트랜잭션 롤백 문제?? <= 비번 변경하고 이게 안먹힘
         try {
             String lockoutKey = LOGIN_FAIL_PREFIX + userEmail;
-            redisTemplate.delete(lockoutKey);
-            redisTemplate.delete(redisKey);
-        } catch (Exception e) {}
+            authRedisTemplate.delete(lockoutKey);
+            authRedisTemplate.delete(redisKey);
+        } catch (Exception ignored) {}
     }
 }

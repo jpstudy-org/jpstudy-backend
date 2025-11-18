@@ -27,7 +27,7 @@ public class AdminAuthservice {
     private final JwtProvider jwtProvider;
     private final AuthenticationManager authenticationManager;
 
-    private final RedisTemplate<String, String> redisTemplate;
+    private final RedisTemplate<String, String> authRedisTemplate;
     private static final String REFRESH_TOKEN_PREFIX = "RT:";
 
     private static final String LOGIN_FAIL_PREFIX = "ADMIN_LOGIN_FAIL:"; // 관리자 전용 Prefix
@@ -37,12 +37,12 @@ public class AdminAuthservice {
     public TokenResponseDto login(LoginRequestDto requestDto) {
 
         String lockoutKey = LOGIN_FAIL_PREFIX + requestDto.getEmail();
-        String currentFailCountStr = redisTemplate.opsForValue().get(lockoutKey);
+        String currentFailCountStr = authRedisTemplate.opsForValue().get(lockoutKey);
 
         if (currentFailCountStr != null) {
             int failCount = Integer.parseInt(currentFailCountStr);
             if (failCount >= MAX_LOGIN_ATTEMPTS) {
-                long expireTimeMinutes = redisTemplate.getExpire(lockoutKey, TimeUnit.MINUTES);
+                long expireTimeMinutes = authRedisTemplate.getExpire(lockoutKey, TimeUnit.MINUTES);
                 String message = String.format("관리자 로그인 %d회 실패. %d분 후 다시 시도하세요.",
                         MAX_LOGIN_ATTEMPTS, expireTimeMinutes > 0 ? expireTimeMinutes + 1 : LOCKOUT_DURATION_MINUTES);
 
@@ -58,10 +58,10 @@ public class AdminAuthservice {
         try {
             authentication = authenticationManager.authenticate(authenticationToken);
         } catch (BadCredentialsException e) {
-            Long newFailCount = redisTemplate.opsForValue().increment(lockoutKey);
+            Long newFailCount = authRedisTemplate.opsForValue().increment(lockoutKey);
 
             if (newFailCount != null && newFailCount == 1) {
-                redisTemplate.expire(lockoutKey, LOCKOUT_DURATION_MINUTES, TimeUnit.MINUTES);
+                authRedisTemplate.expire(lockoutKey, LOCKOUT_DURATION_MINUTES, TimeUnit.MINUTES);
             }
             if (newFailCount != null && newFailCount >= MAX_LOGIN_ATTEMPTS) {
                 throw new LockedException(String.format("관리자 로그인 %d회 실패. %d분 후 다시 시도하세요.", MAX_LOGIN_ATTEMPTS));
@@ -71,7 +71,7 @@ public class AdminAuthservice {
         }
 
         if (currentFailCountStr != null) {
-            redisTemplate.delete(lockoutKey);
+            authRedisTemplate.delete(lockoutKey);
         }
 
 
@@ -92,7 +92,7 @@ public class AdminAuthservice {
         String redisKey = REFRESH_TOKEN_PREFIX + memberId;
         long refreshTokenValidityMs = jwtProvider.getRefreshTokenValidityInMilliseconds();
 
-        redisTemplate.opsForValue().set(
+        authRedisTemplate.opsForValue().set(
                 redisKey,
                 refreshToken,
                 refreshTokenValidityMs,
@@ -112,8 +112,8 @@ public class AdminAuthservice {
         Long memberId = userDetails.getMemberId();
 
         String redisKey = REFRESH_TOKEN_PREFIX + memberId.toString();
-        if (redisTemplate.opsForValue().get(redisKey) != null) {
-            redisTemplate.delete(redisKey);
+        if (authRedisTemplate.opsForValue().get(redisKey) != null) {
+            authRedisTemplate.delete(redisKey);
         }
     }
 
@@ -125,7 +125,7 @@ public class AdminAuthservice {
         Long memberId = jwtProvider.getUserId(clientRefreshToken);
 
         String redisKey = REFRESH_TOKEN_PREFIX + memberId.toString();
-        String storedRefreshToken = redisTemplate.opsForValue().get(redisKey);
+        String storedRefreshToken = authRedisTemplate.opsForValue().get(redisKey);
 
         if (storedRefreshToken == null) {
             throw new IllegalArgumentException("로그아웃된 사용자입니다. 다시 로그인하세요.");

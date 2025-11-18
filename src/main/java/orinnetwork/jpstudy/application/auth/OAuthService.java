@@ -35,7 +35,7 @@ public class OAuthService {
     private final JwtProvider jwtProvider;
     private final InMemoryClientRegistrationRepository clientRegistrationRepository;
 
-    private final RedisTemplate<String, String> redisTemplate;
+    private final RedisTemplate<String, String> authRedisTemplate;
     private static final String REFRESH_TOKEN_PREFIX = "RT:";
 
     @Transactional
@@ -63,7 +63,7 @@ public class OAuthService {
         String redisKey = REFRESH_TOKEN_PREFIX + memberId;
         long refreshTokenValidityMs = jwtProvider.getRefreshTokenValidityInMilliseconds();
 
-        redisTemplate.opsForValue().set(
+        authRedisTemplate.opsForValue().set(
                 redisKey,
                 refreshToken,
                 refreshTokenValidityMs,
