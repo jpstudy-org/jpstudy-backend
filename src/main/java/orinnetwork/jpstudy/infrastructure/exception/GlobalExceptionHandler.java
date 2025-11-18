@@ -1,10 +1,13 @@
 package orinnetwork.jpstudy.infrastructure.exception;
 
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import orinnetwork.jpstudy.infrastructure.exception.dto.ErrorResponse;
@@ -59,5 +62,21 @@ public class GlobalExceptionHandler {
         // 따라서 직접 메시지를 지정해주는 것이 좋습니다.
         ErrorResponse response = new ErrorResponse("AUTH-003", "탈퇴 처리되었거나 비활성화된 계정입니다.");
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+    }
+
+    /**
+     * Method 오류
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    protected ResponseEntity<ErrorResponse> handleMethodException(MethodArgumentNotValidException e) {
+        String message = e.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .findFirst()
+                .map(FieldError::getDefaultMessage)
+                .orElse("입력값이 올바르지 않습니다.");
+
+        ErrorResponse response = new ErrorResponse("INPUT-001", message);
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 }
