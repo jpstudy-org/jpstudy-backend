@@ -35,7 +35,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: true
+    show-sql: ${SHOE_SQL:false}
     open-in-view: false
 
   cloud:
