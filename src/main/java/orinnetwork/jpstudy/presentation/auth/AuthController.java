@@ -1,5 +1,6 @@
 package orinnetwork.jpstudy.presentation.auth;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import orinnetwork.jpstudy.application.auth.dto.PasswordResetConfirm;
 import orinnetwork.jpstudy.application.auth.dto.PasswordResetRequest;
 import orinnetwork.jpstudy.application.auth.dto.SignUpRequest;
 import orinnetwork.jpstudy.application.auth.dto.TokenResponse;
+import orinnetwork.jpstudy.infrastructure.util.IpUtil;
 import orinnetwork.jpstudy.presentation.auth.dto.AccessTokenResponse;
 
 @RestController
@@ -31,9 +33,13 @@ public class AuthController {
     @PostMapping("/signup")
     public ResponseEntity<AccessTokenResponse> signUp(
             @Valid @RequestBody SignUpRequest request,
-            HttpServletResponse response
+            HttpServletResponse response,
+            HttpServletRequest httpServletRequest
     ) {
-        TokenResponse token = authService.signUp(request);
+        final String ipAddress = IpUtil.getClientIp(httpServletRequest);
+        final String userAgent = httpServletRequest.getHeader("User-Agent");
+
+        TokenResponse token = authService.signUp(request, ipAddress, userAgent);
 
         return authResponseHelper.createTokenResponse(token, response);
     }
@@ -41,9 +47,13 @@ public class AuthController {
     @PostMapping("/oauth-login")
     public ResponseEntity<AccessTokenResponse> oauthLogin(
             @RequestBody OAuthLoginRequest requestDto,
-            HttpServletResponse response
+            HttpServletResponse response,
+            HttpServletRequest httpServletRequest
     ) {
-        TokenResponse token = oAuthService.login(requestDto);
+        final String ipAddress = IpUtil.getClientIp(httpServletRequest);
+        final String userAgent = httpServletRequest.getHeader("User-Agent");
+
+        TokenResponse token = oAuthService.login(requestDto, ipAddress, userAgent);
 
         return authResponseHelper.createTokenResponse(token, response);
     }
@@ -51,9 +61,13 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AccessTokenResponse> login(
             @Valid @RequestBody LoginRequest request,
-            HttpServletResponse response
+            HttpServletResponse response,
+            HttpServletRequest httpServletRequest
     ) {
-        TokenResponse token = authService.login(request);
+        final String ipAddress = IpUtil.getClientIp(httpServletRequest);
+        final String userAgent = httpServletRequest.getHeader("User-Agent");
+
+        TokenResponse token = authService.login(request, ipAddress, userAgent);
 
         return authResponseHelper.createTokenResponse(token, response);
     }

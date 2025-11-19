@@ -19,6 +19,8 @@ import orinnetwork.jpstudy.application.auth.dto.PasswordResetRequest;
 import orinnetwork.jpstudy.application.auth.dto.SignUpRequest;
 import orinnetwork.jpstudy.application.auth.dto.TokenResponse;
 import orinnetwork.jpstudy.application.notification.NotificationService;
+import orinnetwork.jpstudy.domain.log.LoginHistory;
+import orinnetwork.jpstudy.domain.log.LoginHistoryRepository;
 import orinnetwork.jpstudy.domain.member.LocalMember;
 import orinnetwork.jpstudy.domain.member.Member;
 import orinnetwork.jpstudy.domain.member.Role;
@@ -52,8 +54,9 @@ public class AuthService {
     private static final String LOGIN_FAIL_PREFIX = "LOGIN_FAIL:";
     private static final int MAX_LOGIN_ATTEMPTS = 5;
     private static final long LOCKOUT_DURATION_MINUTES = 10;
+    private final LoginHistoryRepository loginHistoryRepository;
 
-    public TokenResponse signUp(SignUpRequest requestDto) {
+    public TokenResponse signUp(SignUpRequest requestDto, String ipAddress, String userAgent) {
 
         usernameValidator.validate(requestDto.getUsername());
 
@@ -69,7 +72,16 @@ public class AuthService {
 
         String accessToken = jwtProvider.createAccessToken(savedMember.getId(), savedMember.getRole());
         String refreshToken = jwtProvider.createRefreshToken(savedMember.getId());
+
         String userName = savedMember.getUsername();
+
+        LoginHistory loginHistory = LoginHistory.builder()
+                .memberId(savedMember.getId())
+                .ipAddress(ipAddress)
+                .userAgent(userAgent)
+                .build();
+
+        loginHistoryRepository.save(loginHistory);
 
         String redisKey = REFRESH_TOKEN_PREFIX + savedMember.getId().toString();
         long refreshTokenValidityMs = jwtProvider.getRefreshTokenValidityInMilliseconds();
@@ -91,7 +103,7 @@ public class AuthService {
         return new TokenResponse(accessToken, refreshToken, userName, refreshTokenValidityMs);
     }
 
-    public TokenResponse login(LoginRequest requestDto) {
+    public TokenResponse login(LoginRequest requestDto, String ipAddress, String userAgent) {
 
         String lockoutKey = LOGIN_FAIL_PREFIX + requestDto.getEmail();
         String currentFailCountStr = authRedisTemplate.opsForValue().get(lockoutKey);
@@ -145,6 +157,14 @@ public class AuthService {
 
         String accessToken = jwtProvider.createAccessToken(memberId, role);
         String refreshToken = jwtProvider.createRefreshToken(memberId);
+
+        LoginHistory loginHistory = LoginHistory.builder()
+                .memberId(memberId)
+                .ipAddress(ipAddress)
+                .userAgent(userAgent)
+                .build();
+
+        loginHistoryRepository.save(loginHistory);
 
         String redisKey = REFRESH_TOKEN_PREFIX + memberId;
         long refreshTokenValidityMs = jwtProvider.getRefreshTokenValidityInMilliseconds();

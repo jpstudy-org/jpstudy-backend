@@ -34,7 +34,7 @@ public class AdminAuthservice {
     private static final int MAX_LOGIN_ATTEMPTS = 5;
     private static final long LOCKOUT_DURATION_MINUTES = 10;
 
-    public TokenResponse login(LoginRequest requestDto) {
+    public TokenResponse login(LoginRequest requestDto, String ipAddress, String userAgent) {
 
         String lockoutKey = LOGIN_FAIL_PREFIX + requestDto.getEmail();
         String currentFailCountStr = authRedisTemplate.opsForValue().get(lockoutKey);

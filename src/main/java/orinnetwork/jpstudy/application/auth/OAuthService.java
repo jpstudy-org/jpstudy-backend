@@ -22,6 +22,8 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import orinnetwork.jpstudy.application.auth.dto.OAuthLoginRequest;
 import orinnetwork.jpstudy.application.auth.dto.TokenResponse;
+import orinnetwork.jpstudy.domain.log.LoginHistory;
+import orinnetwork.jpstudy.domain.log.LoginHistoryRepository;
 import orinnetwork.jpstudy.domain.member.MemberRepository;
 import orinnetwork.jpstudy.domain.member.OauthMember;
 import orinnetwork.jpstudy.domain.member.Role;
@@ -37,9 +39,10 @@ public class OAuthService {
 
     private final RedisTemplate<String, String> authRedisTemplate;
     private static final String REFRESH_TOKEN_PREFIX = "RT:";
+    private final LoginHistoryRepository loginHistoryRepository;
 
     @Transactional
-    public TokenResponse login(OAuthLoginRequest requestDto) {
+    public TokenResponse login(OAuthLoginRequest requestDto, String ipAddress, String userAgent) {
         ClientRegistration provider = clientRegistrationRepository.findByRegistrationId(requestDto.getProvider());
 
         if (provider == null) {
@@ -55,6 +58,14 @@ public class OAuthService {
         if (member.getDeletedAt() != null) {
             throw new IllegalArgumentException("탈퇴한 회원입니다");
         }
+
+        LoginHistory loginHistory = LoginHistory.builder()
+                .memberId(member.getId())
+                .ipAddress(ipAddress)
+                .userAgent(userAgent)
+                .build();
+
+        loginHistoryRepository.save(loginHistory);
 
         String accessToken = jwtProvider.createAccessToken(member.getId(), member.getRole());
         String refreshToken = jwtProvider.createRefreshToken(member.getId());
