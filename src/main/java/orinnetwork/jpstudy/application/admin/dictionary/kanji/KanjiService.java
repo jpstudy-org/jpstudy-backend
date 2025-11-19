@@ -13,6 +13,8 @@ import orinnetwork.jpstudy.application.admin.dictionary.kanji.dto.KanjiResponse;
 import orinnetwork.jpstudy.application.dto.CustomPageResponse;
 import orinnetwork.jpstudy.domain.kanji.Kanji;
 import orinnetwork.jpstudy.domain.kanji.KanjiRepository;
+import orinnetwork.jpstudy.infrastructure.exception.CustomException;
+import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
 
 @Service
 @RequiredArgsConstructor
@@ -82,7 +84,7 @@ public class KanjiService {
     @Transactional
     public void deleteKanji(KanjiRequest kanjiRequest) {
         Kanji kanji = kanjiRepository.findByCharacter(kanjiRequest.getCharacter())
-                .orElseThrow(() -> new IllegalArgumentException("해당 한자는 존재하지 않습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.KANJI_NOT_FOUND));
 
         kanji.softDelete();
     }
@@ -91,7 +93,7 @@ public class KanjiService {
     @Transactional
     public KanjiResponse updateKanji(KanjiRequest kanjiRequest) {
         Kanji kanji = kanjiRepository.findByCharacter(kanjiRequest.getCharacter())
-                .orElseThrow(() -> new IllegalArgumentException("해당 한자는 존재하지 않습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.KANJI_NOT_FOUND));
 
         kanji.updateDetails(
                 kanjiRequest.getMeaning(),
@@ -125,7 +127,7 @@ public class KanjiService {
     // 중복 검사
     private void validateDuplicateKanji(String character) {
         if (kanjiRepository.existsByCharacterAndDeletedAtIsNull(character)) {
-            throw new IllegalArgumentException("이미 등록된 한자입니다: " + character);
+            throw new CustomException(ErrorCode.KANJI_ALREADY_EXISTS, character);
         }
     }
 }

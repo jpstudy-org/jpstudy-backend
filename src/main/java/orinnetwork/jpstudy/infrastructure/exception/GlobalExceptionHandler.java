@@ -1,6 +1,10 @@
 package orinnetwork.jpstudy.infrastructure.exception;
 
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -13,70 +17,73 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import orinnetwork.jpstudy.infrastructure.exception.dto.ErrorResponse;
 
 @RestControllerAdvice
+@RequiredArgsConstructor
+@Slf4j
 public class GlobalExceptionHandler {
 
-    /**
-     * Auth 로그인 시 비밀번호 틀림
-     */
+    private final MessageSource messageSource;
+
+    @ExceptionHandler(CustomException.class)
+    protected ResponseEntity<ErrorResponse> handleCustomException(CustomException e) {
+        return createErrorResponse(e.getErrorCode(), e.getArgs());
+    }
+
     @ExceptionHandler(BadCredentialsException.class)
     protected ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException e) {
-        ErrorResponse response = new ErrorResponse("LOGIN-001", e.getMessage());
-        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+        // ErrorCode.LOGIN_FAILED로 매핑
+        return createErrorResponse(ErrorCode.LOGIN_FAILED);
     }
 
-    /**
-     * Auth: 계정 잠김 (LockedException)
-     */
     @ExceptionHandler(LockedException.class)
     protected ResponseEntity<ErrorResponse> handleAccountLocked(LockedException e) {
-        // e.getMessage()에는 "10분간 잠깁니다" 메시지가 담겨있습니다.
-        ErrorResponse response = new ErrorResponse("AUTH-002", e.getMessage());
-        return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+        return createErrorResponse(ErrorCode.ACCOUNT_LOCKED);
     }
 
-    /**
-     * Auth: 탈퇴한 회원 등 (IllegalArgumentException)
-     */
-    @ExceptionHandler(IllegalArgumentException.class)
-    protected ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException e) {
-        ErrorResponse response = new ErrorResponse("COMMON-001", e.getMessage());
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-    }
-
-    /**
-     * 그 외 모든 서버 내부 예외
-     */
-    @ExceptionHandler(Exception.class)
-    protected ResponseEntity<ErrorResponse> handleException(Exception e) {
-        ErrorResponse response = new ErrorResponse("SERVER-ERR", "서버 내부 오류가 발생했습니다.");
-        // (실제 서버에서는 e.printStackTrace() 등으로 로그를 남겨야 합니다)
-        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    /**
-     * Auth: 비활성화된 계정 (탈퇴, 휴면 등)
-     */
     @ExceptionHandler(DisabledException.class)
     protected ResponseEntity<ErrorResponse> handleAccountDisabled(DisabledException e) {
-        // DisabledException은 기본 메시지가 "User is disabled" 뿐입니다.
-        // 따라서 직접 메시지를 지정해주는 것이 좋습니다.
-        ErrorResponse response = new ErrorResponse("AUTH-003", "탈퇴 처리되었거나 비활성화된 계정입니다.");
-        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+        return createErrorResponse(ErrorCode.ACCOUNT_DISABLED);
     }
 
-    /**
-     * Method 오류
-     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    protected ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException e) {
+        return createErrorResponse(ErrorCode.BAD_REQUEST);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    protected ResponseEntity<ErrorResponse> handleMethodException(MethodArgumentNotValidException e) {
-        String message = e.getBindingResult()
-                .getFieldErrors()
-                .stream()
+    protected ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(MethodArgumentNotValidException e) {
+        String message = e.getBindingResult().getFieldErrors().stream()
                 .findFirst()
                 .map(FieldError::getDefaultMessage)
-                .orElse("입력값이 올바르지 않습니다.");
+                .orElse(null);
 
-        ErrorResponse response = new ErrorResponse("INPUT-001", message);
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        if (message == null) {
+            return createErrorResponse(ErrorCode.INVALID_INPUT);
+        }
+
+        return new ResponseEntity<>(
+                new ErrorResponse("INPUT-001", message),
+                HttpStatus.BAD_REQUEST
+        );
+    }
+
+    @ExceptionHandler(Exception.class)
+    protected ResponseEntity<ErrorResponse> handleException(Exception e) {
+        log.error("Unhandled Exception", e);
+        return createErrorResponse(ErrorCode.SERVER_ERROR);
+    }
+
+    private ResponseEntity<ErrorResponse> createErrorResponse(ErrorCode errorCode, Object... args) {
+        // 1. 다국어 메시지 가져오기
+        String translatedMessage = messageSource.getMessage(
+                errorCode.getMessageKey(),
+                args,
+                LocaleContextHolder.getLocale()
+        );
+
+        // 2. 응답 생성
+        return new ResponseEntity<>(
+                new ErrorResponse(errorCode.getCode(), translatedMessage),
+                errorCode.getStatus()
+        );
     }
 }
