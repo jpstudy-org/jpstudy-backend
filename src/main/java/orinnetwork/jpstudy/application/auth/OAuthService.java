@@ -20,8 +20,8 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequ
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponse;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
-import orinnetwork.jpstudy.application.auth.dto.OAuthLoginRequestDto;
-import orinnetwork.jpstudy.application.auth.dto.TokenResponseDto;
+import orinnetwork.jpstudy.application.auth.dto.OAuthLoginRequest;
+import orinnetwork.jpstudy.application.auth.dto.TokenResponse;
 import orinnetwork.jpstudy.domain.member.MemberRepository;
 import orinnetwork.jpstudy.domain.member.OauthMember;
 import orinnetwork.jpstudy.domain.member.Role;
@@ -39,7 +39,7 @@ public class OAuthService {
     private static final String REFRESH_TOKEN_PREFIX = "RT:";
 
     @Transactional
-    public TokenResponseDto login(OAuthLoginRequestDto requestDto) {
+    public TokenResponse login(OAuthLoginRequest requestDto) {
         ClientRegistration provider = clientRegistrationRepository.findByRegistrationId(requestDto.getProvider());
 
         if (provider == null) {
@@ -70,7 +70,7 @@ public class OAuthService {
                 TimeUnit.MILLISECONDS
         );
 
-        return new TokenResponseDto(accessToken, refreshToken, member.getUsername(), refreshTokenValidityMs);
+        return new TokenResponse(accessToken, refreshToken, member.getUsername(), refreshTokenValidityMs);
     }
 
 

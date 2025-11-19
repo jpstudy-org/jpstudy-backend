@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import orinnetwork.jpstudy.application.auth.AdminAuthservice;
-import orinnetwork.jpstudy.application.auth.dto.LoginRequestDto;
-import orinnetwork.jpstudy.application.auth.dto.TokenResponseDto;
+import orinnetwork.jpstudy.application.auth.dto.LoginRequest;
+import orinnetwork.jpstudy.application.auth.dto.TokenResponse;
 import orinnetwork.jpstudy.presentation.auth.dto.AccessTokenResponse;
 
 @RestController
@@ -26,10 +26,10 @@ public class AdminAuthController {
 
     @PostMapping("/login")
     public ResponseEntity<AccessTokenResponse> login(
-            @Valid @RequestBody LoginRequestDto request,
+            @Valid @RequestBody LoginRequest request,
             HttpServletResponse response
     ) {
-        TokenResponseDto token = authService.login(request);
+        TokenResponse token = authService.login(request);
 
         return authResponseHelper.createTokenResponse(token, response);
     }
@@ -52,7 +52,7 @@ public class AdminAuthController {
             return ResponseEntity.status(401).build();
         }
 
-        TokenResponseDto tokenResponse = authService.reissueToken(refreshToken);
+        TokenResponse tokenResponse = authService.reissueToken(refreshToken);
 
         return authResponseHelper.createTokenResponse(tokenResponse, response);
     }

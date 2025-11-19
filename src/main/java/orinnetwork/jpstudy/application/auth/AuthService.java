@@ -13,11 +13,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import orinnetwork.jpstudy.application.auth.dto.LoginRequestDto;
+import orinnetwork.jpstudy.application.auth.dto.LoginRequest;
 import orinnetwork.jpstudy.application.auth.dto.PasswordResetConfirm;
 import orinnetwork.jpstudy.application.auth.dto.PasswordResetRequest;
-import orinnetwork.jpstudy.application.auth.dto.SignUpRequestDto;
-import orinnetwork.jpstudy.application.auth.dto.TokenResponseDto;
+import orinnetwork.jpstudy.application.auth.dto.SignUpRequest;
+import orinnetwork.jpstudy.application.auth.dto.TokenResponse;
 import orinnetwork.jpstudy.application.notification.NotificationService;
 import orinnetwork.jpstudy.domain.member.LocalMember;
 import orinnetwork.jpstudy.domain.member.Member;
@@ -53,7 +53,7 @@ public class AuthService {
     private static final int MAX_LOGIN_ATTEMPTS = 5;
     private static final long LOCKOUT_DURATION_MINUTES = 10;
 
-    public TokenResponseDto signUp(SignUpRequestDto requestDto) {
+    public TokenResponse signUp(SignUpRequest requestDto) {
 
         usernameValidator.validate(requestDto.getUsername());
 
@@ -88,10 +88,10 @@ public class AuthService {
                 ""
         );
 
-        return new TokenResponseDto(accessToken, refreshToken, userName, refreshTokenValidityMs);
+        return new TokenResponse(accessToken, refreshToken, userName, refreshTokenValidityMs);
     }
 
-    public TokenResponseDto login(LoginRequestDto requestDto) {
+    public TokenResponse login(LoginRequest requestDto) {
 
         String lockoutKey = LOGIN_FAIL_PREFIX + requestDto.getEmail();
         String currentFailCountStr = authRedisTemplate.opsForValue().get(lockoutKey);
@@ -156,7 +156,7 @@ public class AuthService {
                 TimeUnit.MILLISECONDS
         );
 
-        return new TokenResponseDto(accessToken, refreshToken, userName, refreshTokenValidityMs);
+        return new TokenResponse(accessToken, refreshToken, userName, refreshTokenValidityMs);
     }
 
     public void logout() {
@@ -174,7 +174,7 @@ public class AuthService {
         }
     }
 
-    public TokenResponseDto reissueToken(String clientRefreshToken) {
+    public TokenResponse reissueToken(String clientRefreshToken) {
         if (!jwtProvider.isValidToken(clientRefreshToken)) {
             throw new IllegalArgumentException("유효하지 않거나 만료된 RefreshToken 입니다.");
         }
@@ -199,7 +199,7 @@ public class AuthService {
         String userName = member.getUsername();
         long refreshTokenValidityMs = jwtProvider.getRefreshTokenValidityInMilliseconds();
 
-        return new TokenResponseDto(newAccessToken, clientRefreshToken, userName, refreshTokenValidityMs);
+        return new TokenResponse(newAccessToken, clientRefreshToken, userName, refreshTokenValidityMs);
     }
 
     public void requestPasswordReset(PasswordResetRequest request) {
@@ -237,11 +237,8 @@ public class AuthService {
             throw new IllegalArgumentException("비밀번호를 변경할 수 없는 타입입니다.");
         }
 
-        // 트랜잭션 롤백 문제?? <= 비번 변경하고 이게 안먹힘
-        try {
             String lockoutKey = LOGIN_FAIL_PREFIX + userEmail;
             authRedisTemplate.delete(lockoutKey);
             authRedisTemplate.delete(redisKey);
-        } catch (Exception ignored) {}
     }
 }

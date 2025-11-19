@@ -11,8 +11,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import orinnetwork.jpstudy.application.auth.dto.LoginRequestDto;
-import orinnetwork.jpstudy.application.auth.dto.TokenResponseDto;
+import orinnetwork.jpstudy.application.auth.dto.LoginRequest;
+import orinnetwork.jpstudy.application.auth.dto.TokenResponse;
 import orinnetwork.jpstudy.domain.member.Member;
 import orinnetwork.jpstudy.domain.member.MemberRepository;
 import orinnetwork.jpstudy.domain.member.Role;
@@ -34,7 +34,7 @@ public class AdminAuthservice {
     private static final int MAX_LOGIN_ATTEMPTS = 5;
     private static final long LOCKOUT_DURATION_MINUTES = 10;
 
-    public TokenResponseDto login(LoginRequestDto requestDto) {
+    public TokenResponse login(LoginRequest requestDto) {
 
         String lockoutKey = LOGIN_FAIL_PREFIX + requestDto.getEmail();
         String currentFailCountStr = authRedisTemplate.opsForValue().get(lockoutKey);
@@ -99,7 +99,7 @@ public class AdminAuthservice {
                 TimeUnit.MILLISECONDS
         );
 
-        return new TokenResponseDto(accessToken, refreshToken, userName, refreshTokenValidityMs);
+        return new TokenResponse(accessToken, refreshToken, userName, refreshTokenValidityMs);
     }
 
     public void logout() {
@@ -117,7 +117,7 @@ public class AdminAuthservice {
         }
     }
 
-    public TokenResponseDto reissueToken(String clientRefreshToken) {
+    public TokenResponse reissueToken(String clientRefreshToken) {
         if (!jwtProvider.isValidToken(clientRefreshToken)) {
             throw new IllegalArgumentException("유효하지 않거나 만료된 RefreshToken 입니다.");
         }
@@ -146,6 +146,6 @@ public class AdminAuthservice {
         String userName = member.getUsername();
         long refreshTokenValidityMs = jwtProvider.getRefreshTokenValidityInMilliseconds();
 
-        return new TokenResponseDto(newAccessToken, clientRefreshToken, userName, refreshTokenValidityMs);
+        return new TokenResponse(newAccessToken, clientRefreshToken, userName, refreshTokenValidityMs);
     }
 }

@@ -3,24 +3,20 @@ package orinnetwork.jpstudy.presentation.auth;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.env.Environment;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import orinnetwork.jpstudy.application.auth.AuthService;
 import orinnetwork.jpstudy.application.auth.OAuthService;
-import orinnetwork.jpstudy.application.auth.dto.LoginRequestDto;
-import orinnetwork.jpstudy.application.auth.dto.OAuthLoginRequestDto;
+import orinnetwork.jpstudy.application.auth.dto.LoginRequest;
+import orinnetwork.jpstudy.application.auth.dto.OAuthLoginRequest;
 import orinnetwork.jpstudy.application.auth.dto.PasswordResetConfirm;
 import orinnetwork.jpstudy.application.auth.dto.PasswordResetRequest;
-import orinnetwork.jpstudy.application.auth.dto.SignUpRequestDto;
-import orinnetwork.jpstudy.application.auth.dto.TokenResponseDto;
-import orinnetwork.jpstudy.infrastructure.jwt.JwtProvider;
+import orinnetwork.jpstudy.application.auth.dto.SignUpRequest;
+import orinnetwork.jpstudy.application.auth.dto.TokenResponse;
 import orinnetwork.jpstudy.presentation.auth.dto.AccessTokenResponse;
 
 @RestController
@@ -34,30 +30,30 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<AccessTokenResponse> signUp(
-            @Valid @RequestBody SignUpRequestDto request,
+            @Valid @RequestBody SignUpRequest request,
             HttpServletResponse response
     ) {
-        TokenResponseDto token = authService.signUp(request);
+        TokenResponse token = authService.signUp(request);
 
         return authResponseHelper.createTokenResponse(token, response);
     }
 
     @PostMapping("/oauth-login")
     public ResponseEntity<AccessTokenResponse> oauthLogin(
-            @RequestBody OAuthLoginRequestDto requestDto,
+            @RequestBody OAuthLoginRequest requestDto,
             HttpServletResponse response
     ) {
-        TokenResponseDto token = oAuthService.login(requestDto);
+        TokenResponse token = oAuthService.login(requestDto);
 
         return authResponseHelper.createTokenResponse(token, response);
     }
 
     @PostMapping("/login")
     public ResponseEntity<AccessTokenResponse> login(
-            @Valid @RequestBody LoginRequestDto request,
+            @Valid @RequestBody LoginRequest request,
             HttpServletResponse response
     ) {
-        TokenResponseDto token = authService.login(request);
+        TokenResponse token = authService.login(request);
 
         return authResponseHelper.createTokenResponse(token, response);
     }
@@ -79,7 +75,7 @@ public class AuthController {
         if (refreshToken == null) {
             return ResponseEntity.status(401).body(null);
         }
-        TokenResponseDto tokenResponse = authService.reissueToken(refreshToken);
+        TokenResponse tokenResponse = authService.reissueToken(refreshToken);
 
         return authResponseHelper.createTokenResponse(tokenResponse, response);
     }
