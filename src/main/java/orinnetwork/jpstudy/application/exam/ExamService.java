@@ -49,15 +49,15 @@ public class ExamService {
         List<ExamQuestion> examQuestions = new ArrayList<>();
         int currentQuestionNumber = 1;
 
-        for (BlueprintDetail section : blueprint.getSections()) {
+        for (BlueprintDetail detail : blueprint.getDetails()) {
 
             List<Question> questions = questionRepository.findRandomQuestionsByLevelAndCategory(
                     blueprint.getLevel().getId(),
-                    section.getCategory().getName(),
-                    PageRequest.of(0, section.getQuestionCount())
+                    detail.getCategory().getName(),
+                    PageRequest.of(0, detail.getQuestionCount())
             );
 
-            if (questions.size() < section.getQuestionCount()) {
+            if (questions.size() < detail.getQuestionCount()) {
                 throw new CustomException(ErrorCode.NOT_ENOUGH_QUESTIONS);
             }
 
