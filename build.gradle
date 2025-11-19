@@ -61,7 +61,7 @@ dependencies {
 
     // swagger
     implementation 'org.apache.commons:commons-lang3:3.18.0'
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14'
 
     // Oauth
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
