@@ -22,7 +22,7 @@ public class ExamController {
 
     @PostMapping
     public ResponseEntity<ExamTakingResponse> createRandomExam(@RequestBody CreateExamRequest request) {
-        ExamTakingResponse examResponse = examService.createRandomExam(request);
+        ExamTakingResponse examResponse = examService.createExamFromBlueprint(request);
         return ResponseEntity.ok(examResponse);
     }
 

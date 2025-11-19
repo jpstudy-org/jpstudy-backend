@@ -40,6 +40,7 @@ public enum ErrorCode {
     NOT_ENOUGH_QUESTIONS(HttpStatus.BAD_REQUEST, "EXAM-003", "error.exam.not_enough_questions"),
     TEST_ATTEMPT_NOT_FOUND(HttpStatus.NOT_FOUND, "EXAM-004", "error.exam.attempt_not_found"),
     TEST_ALREADY_SUBMITTED(HttpStatus.BAD_REQUEST, "EXAM-005", "error.exam.already_submitted"),
+    RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "EXAM-006", "error.exam.resource.not_found"),
 
     // [Dictionary - Kanji]
     KANJI_NOT_FOUND(HttpStatus.NOT_FOUND, "DIC-001", "error.dictionary.kanji_not_found"),
