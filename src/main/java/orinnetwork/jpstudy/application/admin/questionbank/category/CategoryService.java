@@ -11,6 +11,8 @@ import orinnetwork.jpstudy.domain.questionbank.QuestionCategory;
 import orinnetwork.jpstudy.domain.questionbank.QuestionCategoryRepository;
 import orinnetwork.jpstudy.domain.questionbank.Section;
 import orinnetwork.jpstudy.domain.questionbank.SectionRepository;
+import orinnetwork.jpstudy.infrastructure.exception.CustomException;
+import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
 
 @Service
 @RequiredArgsConstructor
@@ -22,7 +24,7 @@ public class CategoryService {
 
     public CategoryResponse createCategory(CategoryRequest request) {
         Section section = sectionRepository.findById(request.sectionId())
-                .orElseThrow(() -> new IllegalArgumentException("Section not found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.SECTION_NOT_FOUND));
 
         QuestionCategory newCategory = QuestionCategory.builder()
                 .section(section)
@@ -34,17 +36,20 @@ public class CategoryService {
 
     public CategoryResponse updateCategory(Long categoryId, CategoryRequest request) {
         QuestionCategory category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new IllegalArgumentException("Category nod found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.CATEGORY_NOT_FOUND));
 
         Section section = sectionRepository.findById(request.sectionId())
-                .orElseThrow(() -> new IllegalArgumentException("Section not found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.SECTION_NOT_FOUND));
 
         category.update(section, request.name());
         return CategoryResponse.fromEntity(category);
     }
 
     public void deleteCategory(Long categoryId) {
-        categoryRepository.deleteById(categoryId);
+        QuestionCategory category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new CustomException(ErrorCode.CATEGORY_NOT_FOUND));
+
+        categoryRepository.delete(category);
     }
 
     @Transactional(readOnly = true)

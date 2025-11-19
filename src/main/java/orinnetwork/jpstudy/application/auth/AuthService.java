@@ -25,8 +25,11 @@ import orinnetwork.jpstudy.domain.member.LocalMember;
 import orinnetwork.jpstudy.domain.member.Member;
 import orinnetwork.jpstudy.domain.member.Role;
 import orinnetwork.jpstudy.domain.member.UsernameValidator;
+import orinnetwork.jpstudy.domain.notification.NotificationMessage;
 import orinnetwork.jpstudy.domain.notification.NotificationType;
 import orinnetwork.jpstudy.infrastructure.email.EmailService;
+import orinnetwork.jpstudy.infrastructure.exception.CustomException;
+import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
 import orinnetwork.jpstudy.infrastructure.jwt.JwtProvider;
 import orinnetwork.jpstudy.domain.member.MemberRepository;
 import orinnetwork.jpstudy.infrastructure.security.CustomUserDetails;
@@ -96,7 +99,8 @@ public class AuthService {
         notificationService.send(
                 savedMember.getId(),
                 NotificationType.SIGNUP,
-                "서비스에 가입해주셔서 감사합니다",
+                NotificationMessage.SIGNUP_WELCOME,
+                savedMember.getLanguagePreference(),
                 ""
         );
 
@@ -112,10 +116,9 @@ public class AuthService {
             int failCount = Integer.parseInt(currentFailCountStr);
             if (failCount >= MAX_LOGIN_ATTEMPTS) {
                 long expireTimeMinutes = authRedisTemplate.getExpire(lockoutKey, TimeUnit.MINUTES);
-                String message = String.format("Password Error to %d. Please %d minute.",
-                        MAX_LOGIN_ATTEMPTS, expireTimeMinutes > 0 ? expireTimeMinutes + 1 : LOCKOUT_DURATION_MINUTES);
+                long remainTime = expireTimeMinutes > 0 ? expireTimeMinutes + 1 : LOCKOUT_DURATION_MINUTES;
 
-                throw new LockedException(message);
+                throw new CustomException(ErrorCode.ACCOUNT_LOCKED, remainTime);
             }
         }
 
@@ -133,9 +136,9 @@ public class AuthService {
                 authRedisTemplate.expire(lockoutKey, LOCKOUT_DURATION_MINUTES, TimeUnit.MINUTES);
             }
             if (newFailCount != null && newFailCount >= MAX_LOGIN_ATTEMPTS) {
-                throw new LockedException(String.format("Password Error to %d. Please 10 minute.", MAX_LOGIN_ATTEMPTS));
+                throw new CustomException(ErrorCode.ACCOUNT_LOCKED, LOCKOUT_DURATION_MINUTES);
             } else {
-                throw new BadCredentialsException("Failed Password");
+                throw new CustomException(ErrorCode.LOGIN_FAILED);
             }
         }
 
@@ -148,7 +151,7 @@ public class AuthService {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
         if (!userDetails.isEnabled()) {
-            throw new IllegalArgumentException("탈퇴한 회원입니다");
+            throw new CustomException(ErrorCode.ACCOUNT_DISABLED);
         }
 
         Long memberId = userDetails.getMemberId();
@@ -196,7 +199,7 @@ public class AuthService {
 
     public TokenResponse reissueToken(String clientRefreshToken) {
         if (!jwtProvider.isValidToken(clientRefreshToken)) {
-            throw new IllegalArgumentException("유효하지 않거나 만료된 RefreshToken 입니다.");
+            throw new CustomException(ErrorCode.LOGIN_FAILED);
         }
 
         Long memberId = jwtProvider.getUserId(clientRefreshToken);
@@ -205,15 +208,15 @@ public class AuthService {
         String storedRefreshToken = authRedisTemplate.opsForValue().get(redisKey);
 
         if (storedRefreshToken == null) {
-            throw new IllegalArgumentException("로그아웃된 사용자입니다. 다시 로그인하세요.");
+            throw new CustomException(ErrorCode.LOGIN_FAILED);
         }
 
         if (!storedRefreshToken.equals(clientRefreshToken)) {
-            throw new IllegalArgumentException("토큰이 일치하지 않습니다. 비정상적인 접근입니다.");
+            throw new CustomException(ErrorCode.LOGIN_FAILED);
         }
 
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("ID에 해당하는 회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.ACCOUNT_DISABLED));
 
         String newAccessToken = jwtProvider.createAccessToken(member.getId(), member.getRole());
         String userName = member.getUsername();
@@ -224,7 +227,7 @@ public class AuthService {
 
     public void requestPasswordReset(PasswordResetRequest request) {
         Member member = memberRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_INPUT));
 
         String resetToken = UUID.randomUUID().toString();
         String redisKey = RESET_TOKEN_PREFIX + resetToken;
@@ -245,16 +248,16 @@ public class AuthService {
         String userEmail = authRedisTemplate.opsForValue().get(redisKey);
 
         if (userEmail == null) {
-            throw new IllegalArgumentException("유효하지 않거나 만료된 토큰입니다.");
+            throw new CustomException(ErrorCode.INVALID_INPUT);
         }
 
         Member member = memberRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_INPUT));
 
         if (member instanceof LocalMember localMember) {
             localMember.updatePassword(passwordEncoder.encode(request.getNewPassword()));
         } else {
-            throw new IllegalArgumentException("비밀번호를 변경할 수 없는 타입입니다.");
+            throw new CustomException(ErrorCode.INVALID_INPUT);
         }
 
             String lockoutKey = LOGIN_FAIL_PREFIX + userEmail;

@@ -27,6 +27,8 @@ import orinnetwork.jpstudy.domain.log.LoginHistoryRepository;
 import orinnetwork.jpstudy.domain.member.MemberRepository;
 import orinnetwork.jpstudy.domain.member.OauthMember;
 import orinnetwork.jpstudy.domain.member.Role;
+import orinnetwork.jpstudy.infrastructure.exception.CustomException;
+import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
 import orinnetwork.jpstudy.infrastructure.jwt.JwtProvider;
 
 @Service
@@ -46,7 +48,7 @@ public class OAuthService {
         ClientRegistration provider = clientRegistrationRepository.findByRegistrationId(requestDto.getProvider());
 
         if (provider == null) {
-            throw new IllegalArgumentException("지원하지 않는 소셜 로그인입니다: " + requestDto.getProvider());
+            throw new CustomException(ErrorCode.OAUTH_PROVIDER_NOT_SUPPORTED, requestDto.getProvider());
         }
 
         OAuth2AccessTokenResponse tokenResponse = getToken(provider, requestDto.getAuthorizationCode());
@@ -56,7 +58,7 @@ public class OAuthService {
         OauthMember member = saveOrUpdate(oAuth2User, requestDto.getProvider());
 
         if (member.getDeletedAt() != null) {
-            throw new IllegalArgumentException("탈퇴한 회원입니다");
+            throw new CustomException(ErrorCode.ACCOUNT_DISABLED);
         }
 
         LoginHistory loginHistory = LoginHistory.builder()
@@ -112,7 +114,7 @@ public class OAuthService {
         try {
             return userService.loadUser(userRequest);
         } catch (OAuth2AuthenticationException e) {
-            throw new RuntimeException("소셜 로그인 사용자 정보를 가져오는 데 실패했습니다.", e);
+            throw new CustomException(ErrorCode.OAUTH_FAIL);
         }
     }
 
@@ -130,7 +132,7 @@ public class OAuthService {
                 email = attributes.get("email").toString();
                 username = attributes.get("name").toString();
             }
-            default -> throw new IllegalArgumentException("지원하지 않는 소셜 로그인입니다: " + providerName);
+            default -> throw new CustomException(ErrorCode.OAUTH_PROVIDER_NOT_SUPPORTED, providerName);
         }
 
         Optional<OauthMember> memberOptional = memberRepository.findByProviderAndProviderId(lowerCaseProviderName, providerId);

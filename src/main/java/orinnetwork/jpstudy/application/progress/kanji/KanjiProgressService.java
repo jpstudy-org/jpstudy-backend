@@ -17,6 +17,8 @@ import orinnetwork.jpstudy.domain.member.MemberRepository;
 import orinnetwork.jpstudy.domain.progress.MasteryLevel;
 import orinnetwork.jpstudy.domain.progress.MemberKanjiProgress;
 import orinnetwork.jpstudy.domain.progress.MemberKanjiProgressRepository;
+import orinnetwork.jpstudy.infrastructure.exception.CustomException;
+import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
 
 @Service
 @RequiredArgsConstructor
@@ -59,7 +61,7 @@ public class KanjiProgressService {
 
         Member member = memberRepository.getReferenceById(memberId);
         Kanji kanji = kanjiRepository.findById(kanjiId)
-                .orElseThrow(() -> new IllegalArgumentException("Kanji not found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.KANJI_NOT_FOUND));
 
         MemberKanjiProgress progress = progressRepository
                 .findByMemberAndKanji(member, kanji)

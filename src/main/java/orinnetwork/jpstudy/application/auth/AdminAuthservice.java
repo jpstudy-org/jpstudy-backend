@@ -16,6 +16,8 @@ import orinnetwork.jpstudy.application.auth.dto.TokenResponse;
 import orinnetwork.jpstudy.domain.member.Member;
 import orinnetwork.jpstudy.domain.member.MemberRepository;
 import orinnetwork.jpstudy.domain.member.Role;
+import orinnetwork.jpstudy.infrastructure.exception.CustomException;
+import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
 import orinnetwork.jpstudy.infrastructure.jwt.JwtProvider;
 import orinnetwork.jpstudy.infrastructure.security.CustomUserDetails;
 
@@ -43,10 +45,9 @@ public class AdminAuthservice {
             int failCount = Integer.parseInt(currentFailCountStr);
             if (failCount >= MAX_LOGIN_ATTEMPTS) {
                 long expireTimeMinutes = authRedisTemplate.getExpire(lockoutKey, TimeUnit.MINUTES);
-                String message = String.format("관리자 로그인 %d회 실패. %d분 후 다시 시도하세요.",
-                        MAX_LOGIN_ATTEMPTS, expireTimeMinutes > 0 ? expireTimeMinutes + 1 : LOCKOUT_DURATION_MINUTES);
 
-                throw new LockedException(message);
+                long remainTime = expireTimeMinutes > 0 ? expireTimeMinutes + 1 : LOCKOUT_DURATION_MINUTES;
+                throw new CustomException(ErrorCode.ACCOUNT_LOCKED, remainTime);
             }
         }
 
@@ -64,9 +65,9 @@ public class AdminAuthservice {
                 authRedisTemplate.expire(lockoutKey, LOCKOUT_DURATION_MINUTES, TimeUnit.MINUTES);
             }
             if (newFailCount != null && newFailCount >= MAX_LOGIN_ATTEMPTS) {
-                throw new LockedException(String.format("관리자 로그인 %d회 실패. %d분 후 다시 시도하세요.", MAX_LOGIN_ATTEMPTS));
+                throw new CustomException(ErrorCode.ACCOUNT_LOCKED, LOCKOUT_DURATION_MINUTES);
             } else {
-                throw new BadCredentialsException("관리자 계정의 이메일 또는 비밀번호가 틀렸습니다.");
+                throw new CustomException(ErrorCode.LOGIN_FAILED);
             }
         }
 
@@ -83,7 +84,7 @@ public class AdminAuthservice {
         String userName = userDetails.getUsername();
 
         if (role != Role.ADMIN) {
-            throw new AccessDeniedException("관리자 권한이 없습니다.");
+            throw new CustomException(ErrorCode.NOT_ADMIN);
         }
 
         String accessToken = jwtProvider.createAccessToken(memberId, role);
@@ -119,7 +120,7 @@ public class AdminAuthservice {
 
     public TokenResponse reissueToken(String clientRefreshToken) {
         if (!jwtProvider.isValidToken(clientRefreshToken)) {
-            throw new IllegalArgumentException("유효하지 않거나 만료된 RefreshToken 입니다.");
+            throw new CustomException(ErrorCode.LOGIN_FAILED);
         }
 
         Long memberId = jwtProvider.getUserId(clientRefreshToken);
@@ -128,18 +129,18 @@ public class AdminAuthservice {
         String storedRefreshToken = authRedisTemplate.opsForValue().get(redisKey);
 
         if (storedRefreshToken == null) {
-            throw new IllegalArgumentException("로그아웃된 사용자입니다. 다시 로그인하세요.");
+            throw new CustomException(ErrorCode.LOGIN_FAILED);
         }
 
         if (!storedRefreshToken.equals(clientRefreshToken)) {
-            throw new IllegalArgumentException("토큰이 일치하지 않습니다. 비정상적인 접근입니다.");
+            throw new CustomException(ErrorCode.LOGIN_FAILED);
         }
 
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("ID에 해당하는 회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.ACCOUNT_DISABLED));
 
         if (member.getRole() != Role.ADMIN) {
-            throw new AccessDeniedException("관리자 권한이 없습니다.");
+            throw new CustomException(ErrorCode.NOT_ADMIN);
         }
 
         String newAccessToken = jwtProvider.createAccessToken(member.getId(), member.getRole());

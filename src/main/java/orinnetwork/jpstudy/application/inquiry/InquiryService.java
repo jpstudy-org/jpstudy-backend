@@ -10,6 +10,8 @@ import orinnetwork.jpstudy.application.inquiry.dto.InquiryResponse;
 import orinnetwork.jpstudy.domain.inquiry.Inquiry;
 import orinnetwork.jpstudy.domain.inquiry.InquiryAttachment;
 import orinnetwork.jpstudy.domain.inquiry.InquiryRepository;
+import orinnetwork.jpstudy.infrastructure.exception.CustomException;
+import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
 
 @Service
 @RequiredArgsConstructor
@@ -47,10 +49,10 @@ public class InquiryService {
     @Transactional(readOnly = true)
     public InquiryResponse getInquiryDetails(Long inquiryId, Long memberId) {
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
-                .orElseThrow(() -> new IllegalArgumentException("Inquiry not found: " + inquiryId));
+                .orElseThrow(() -> new CustomException(ErrorCode.INQUIRY_NOT_FOUND));
 
         if (!inquiry.getMemberId().equals(memberId)) {
-            throw new IllegalArgumentException("권한 없음");
+            throw new CustomException(ErrorCode.INQUIRY_NOT_OWNER);
         }
 
         return InquiryResponse.from(inquiry);

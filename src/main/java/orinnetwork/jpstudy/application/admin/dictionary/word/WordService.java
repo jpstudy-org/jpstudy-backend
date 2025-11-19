@@ -25,6 +25,8 @@ import orinnetwork.jpstudy.domain.word.WordKanjiRepository;
 import orinnetwork.jpstudy.domain.word.WordRepository;
 import orinnetwork.jpstudy.domain.word.WordTag;
 import orinnetwork.jpstudy.domain.word.WordTagRepository;
+import orinnetwork.jpstudy.infrastructure.exception.CustomException;
+import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
 
 @Service
 @RequiredArgsConstructor
@@ -102,7 +104,7 @@ public class WordService {
     @Transactional
     public void deleteWord(WordRequest wordRequest) {
         Word word = wordRepository.findByTerm(wordRequest.getTerm())
-                .orElseThrow(() -> new IllegalArgumentException("해당 단어는 존재하지 않습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.WORD_NOT_FOUND));
 
         word.softDelete();
     }
@@ -112,7 +114,7 @@ public class WordService {
     public WordResponse updateWord(WordRequest request) {
 
         Word word = wordRepository.findByTerm(request.getTerm())
-                .orElseThrow(() -> new IllegalArgumentException("해당 단어는 존재하지 않습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.WORD_NOT_FOUND));
 
         List<Kanji> foundKanjis = findAndValidateKanjis(request.getKanjiCharacters());
 
@@ -149,7 +151,7 @@ public class WordService {
 
     private void validateDuplicateWord(String term) {
         if (wordRepository.existsByTermAndDeletedAtIsNull(term)) {
-            throw new IllegalArgumentException("이미 등록된 단어입니다: " + term);
+            throw new CustomException(ErrorCode.WORD_ALREADY_EXISTS, term);
         }
     }
 

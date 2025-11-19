@@ -10,6 +10,8 @@ import orinnetwork.jpstudy.application.member.dto.MemberUpdateRequest;
 import orinnetwork.jpstudy.domain.member.Member;
 import orinnetwork.jpstudy.domain.member.MemberRepository;
 import orinnetwork.jpstudy.domain.member.UsernameValidator;
+import orinnetwork.jpstudy.infrastructure.exception.CustomException;
+import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
 
 @Service
 @RequiredArgsConstructor
@@ -26,7 +28,7 @@ public class MemberService {
     @Transactional(readOnly = true)
     public MemberProfileResponse getMyProfile(Long userId) {
         Member member = memberRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         return MemberProfileResponse.from(member);
     }
@@ -35,7 +37,7 @@ public class MemberService {
     @Transactional
     public void updateProfile(Long userId, MemberUpdateRequest request) {
         Member member = memberRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         if (StringUtils.hasText(request.getUsername())) {
             usernameValidator.validate(request.getUsername());
@@ -55,7 +57,7 @@ public class MemberService {
     @Transactional
     public void withdrawMember(Long userId) {
         Member member = memberRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         member.withdraw();
     }
@@ -63,7 +65,7 @@ public class MemberService {
     @Transactional
     public void addExperience(Long userId, int experienceToAdd) {
         Member member = memberRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         member.addExperience(experienceToAdd);
         checkAndProcessLevelUp(member);

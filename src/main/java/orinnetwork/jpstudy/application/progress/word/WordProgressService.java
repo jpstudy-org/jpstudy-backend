@@ -17,6 +17,8 @@ import orinnetwork.jpstudy.domain.progress.MemberWordProgress;
 import orinnetwork.jpstudy.domain.progress.MemberWordProgressRepository;
 import orinnetwork.jpstudy.domain.word.Word;
 import orinnetwork.jpstudy.domain.word.WordRepository;
+import orinnetwork.jpstudy.infrastructure.exception.CustomException;
+import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
 
 @Service
 @RequiredArgsConstructor
@@ -61,7 +63,7 @@ public class WordProgressService {
 
         Member member = memberRepository.getReferenceById(memberId);
         Word word = wordRepository.findById(wordId)
-                .orElseThrow(() -> new IllegalArgumentException("Word not found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.WORD_NOT_FOUND));
 
         MemberWordProgress progress = progressRepository
                 .findByMemberAndWord(member, word)

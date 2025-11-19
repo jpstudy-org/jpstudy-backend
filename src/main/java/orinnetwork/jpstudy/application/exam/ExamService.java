@@ -18,6 +18,8 @@ import orinnetwork.jpstudy.domain.questionbank.Level;
 import orinnetwork.jpstudy.domain.questionbank.LevelRepository;
 import orinnetwork.jpstudy.domain.questionbank.Question;
 import orinnetwork.jpstudy.domain.questionbank.QuestionRepository;
+import orinnetwork.jpstudy.infrastructure.exception.CustomException;
+import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
 
 @Service
 @RequiredArgsConstructor
@@ -32,7 +34,7 @@ public class ExamService {
     @Transactional
     public ExamTakingResponse createRandomExam(CreateExamRequest request) {
         Level level = levelRepository.findById(request.levelId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 레벨입니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.LEVEL_NOT_FOUND));
 
         Exam exam = Exam.builder()
                 .level(level)
@@ -75,7 +77,7 @@ public class ExamService {
      */
     public ExamTakingResponse getExamDetails(Long examId) {
         Exam exam = examRepository.findById(examId)
-                .orElseThrow(() -> new IllegalArgumentException("시험지를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.EXAM_NOT_FOUND));
 
         List<ExamQuestion> examQuestions = examQuestionRepository.findByExamIdOrderByQuestionNumberAsc(examId);
 

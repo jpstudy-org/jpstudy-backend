@@ -76,7 +76,7 @@ public class NotificationController {
             return ResponseEntity.status(401).build();
         }
 
-        long count = notificationService.getUnreadCound(userDetails.getMemberId());
+        long count = notificationService.getUnreadCount(userDetails.getMemberId());
         return ResponseEntity.ok(count);
     }
 }

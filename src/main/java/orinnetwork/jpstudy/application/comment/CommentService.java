@@ -16,6 +16,8 @@ import orinnetwork.jpstudy.domain.member.MemberRepository;
 import orinnetwork.jpstudy.domain.post.Post;
 import orinnetwork.jpstudy.domain.post.PostRepository;
 import orinnetwork.jpstudy.domain.post.PostStatus;
+import orinnetwork.jpstudy.infrastructure.exception.CustomException;
+import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
 
 @Service
 @RequiredArgsConstructor
@@ -29,14 +31,14 @@ public class CommentService {
     @Transactional
     public CommentResponse createComment(Long postId, CommentRequest request, Long memberId, String ipAddress) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 게시글은 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
 
         if (post.getPostStatus() != PostStatus.ACTIVE) {
-            throw new IllegalArgumentException("삭제되거나 비공개된 게시글에는 댓글을 작성할 수 없습니다.");
+            throw new CustomException(ErrorCode.POST_NOT_ACTIVE);
         }
 
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 멤버를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         Comment newComment = Comment.builder()
                 .content(request.getContent())
@@ -55,10 +57,10 @@ public class CommentService {
 
     public CustomPageResponse<CommentResponse> getComments(Long postId, Pageable pageable) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 게시글은 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
 
         if (post.getPostStatus() != PostStatus.ACTIVE) {
-            throw new IllegalArgumentException("삭제되거나 비공개된 게시글입니다.");
+            throw new CustomException(ErrorCode.POST_NOT_ACTIVE);
         }
 
         Page<Comment> commentPage = commentRepository.findByPost_IdAndCommentStatus(
@@ -75,10 +77,10 @@ public class CommentService {
     @Transactional
     public void deleteComment(Long commentId, Long memberId) {
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 댓글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.COMMENT_NOT_FOUND));
 
         if (!comment.getMember().getId().equals(memberId)) {
-            throw new IllegalArgumentException("댓글 삭제 권한이 없습니다.");
+            throw new CustomException(ErrorCode.COMMENT_NOT_OWNER);
         }
 
         comment.delete();
