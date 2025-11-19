@@ -36,7 +36,8 @@ public class InquiryAttachment {
         this.contentType = contentType;
     }
 
-    public static InquiryAttachment create(String storageKey, String originalFileName, long fileSize, String contentType) {
+    public static InquiryAttachment create(String storageKey, String originalFileName, long fileSize,
+                                           String contentType) {
         return new InquiryAttachment(storageKey, originalFileName, fileSize, contentType);
     }
 

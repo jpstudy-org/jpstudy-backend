@@ -16,7 +16,8 @@ public class PostSummaryResponse {
     private final int commentCount;
 
     @Builder
-    public PostSummaryResponse(Long postId, String title, String authorNickname, LocalDateTime createdAt, int viewCount, int commentCount) {
+    public PostSummaryResponse(Long postId, String title, String authorNickname, LocalDateTime createdAt, int viewCount,
+                               int commentCount) {
         this.postId = postId;
         this.title = title;
         this.authorNickname = authorNickname;

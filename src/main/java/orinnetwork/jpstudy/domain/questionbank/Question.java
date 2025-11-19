@@ -53,7 +53,8 @@ public class Question {
     private List<Choice> choices = new ArrayList<>();
 
     @Builder
-    public Question(Level level, QuestionCategory category, String questionText, String passage, String audioUrl, String explanation, boolean isAIGenerated, List<Choice> choices) {
+    public Question(Level level, QuestionCategory category, String questionText, String passage, String audioUrl,
+                    String explanation, boolean isAIGenerated, List<Choice> choices) {
         this.level = level;
         this.category = category;
         this.questionText = questionText;
@@ -64,7 +65,8 @@ public class Question {
         this.choices = (choices == null) ? new ArrayList<>() : choices;
     }
 
-    public void update(Level level, QuestionCategory category, String questionText, String passage, String audioUrl, String explanation) {
+    public void update(Level level, QuestionCategory category, String questionText, String passage, String audioUrl,
+                       String explanation) {
         this.level = level;
         this.category = category;
         this.questionText = questionText;

@@ -19,12 +19,14 @@ public record ExamTakingResponse(
             String passage,
             String audioUrl,
             List<ChoiceDto> choices
-    ) {}
+    ) {
+    }
 
     public record ChoiceDto(
             Long choiceId,
             String choiceText
-    ) {}
+    ) {
+    }
 
     public static ExamTakingResponse of(Exam exam, List<ExamQuestion> examQuestions) {
         List<QuestionDto> questionDtos = examQuestions.stream()

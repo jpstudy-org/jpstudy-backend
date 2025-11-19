@@ -22,8 +22,7 @@ public class WordSearchService {
 
         if (keyword == null || keyword.isBlank()) {
             wordPage = wordRepository.findAllByDeletedAtIsNull(pageable);
-        }
-        else {
+        } else {
             wordPage = wordRepository.searchActiveByKeyword(keyword, pageable);
         }
 

@@ -3,7 +3,6 @@ package orinnetwork.jpstudy.presentation.comment;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
@@ -50,7 +49,7 @@ public class CommentController {
     public ResponseEntity<CustomPageResponse<CommentResponse>> getComments(
             @PathVariable Long postId,
             @PageableDefault(size = 20, sort = "createdAt", direction = Direction.DESC) Pageable pageable
-            ) {
+    ) {
         CustomPageResponse<CommentResponse> page = commentService.getComments(postId, pageable);
         return ResponseEntity.ok(page);
     }

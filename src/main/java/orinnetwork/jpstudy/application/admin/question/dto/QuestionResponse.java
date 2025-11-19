@@ -16,7 +16,8 @@ public record QuestionResponse(
             Long choiceId,
             String choiceText,
             boolean isCorrect
-    ) {}
+    ) {
+    }
 
     public static QuestionResponse fromEntity(Question question) {
         List<ChoiceDto> choiceDtos = question.getChoices().stream()

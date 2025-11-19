@@ -8,4 +8,5 @@ public record CreateBlueprintRequest(
         Long levelId,
         int totalTimeMinutes,
         List<BlueprintDetailRequest> details
-) { }
+) {
+}

@@ -19,8 +19,7 @@ public class WordSearchResponse {
             this.meanings = word.getMeanings().stream()
                     .map(Meaning::getMeaningEn)
                     .toList();
-        }
-        else {
+        } else {
             this.meanings = word.getMeanings().stream()
                     .map(Meaning::getMeaningKr)
                     .toList();

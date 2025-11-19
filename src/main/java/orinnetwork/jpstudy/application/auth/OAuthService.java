@@ -103,7 +103,8 @@ public class OAuthService {
                         .build()
         );
 
-        OAuth2AuthorizationCodeGrantRequest grantRequest = new OAuth2AuthorizationCodeGrantRequest(provider, authorizationExchange);
+        OAuth2AuthorizationCodeGrantRequest grantRequest = new OAuth2AuthorizationCodeGrantRequest(provider,
+                authorizationExchange);
         return tokenResponseClient.getTokenResponse(grantRequest);
     }
 
@@ -135,13 +136,13 @@ public class OAuthService {
             default -> throw new CustomException(ErrorCode.OAUTH_PROVIDER_NOT_SUPPORTED, providerName);
         }
 
-        Optional<OauthMember> memberOptional = memberRepository.findByProviderAndProviderId(lowerCaseProviderName, providerId);
+        Optional<OauthMember> memberOptional = memberRepository.findByProviderAndProviderId(lowerCaseProviderName,
+                providerId);
 
         OauthMember member;
         if (memberOptional.isPresent()) {
             member = memberOptional.get();
-        }
-        else {
+        } else {
             member = new OauthMember(
                     email,
                     username,

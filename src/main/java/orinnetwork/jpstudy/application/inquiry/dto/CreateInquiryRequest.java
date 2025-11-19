@@ -6,4 +6,5 @@ public record CreateInquiryRequest(
         String title,
         String content,
         List<AttachmentRequest> attachments
-) { }
+) {
+}

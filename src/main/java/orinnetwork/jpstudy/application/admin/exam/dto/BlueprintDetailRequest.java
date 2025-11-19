@@ -4,4 +4,5 @@ public record BlueprintDetailRequest(
         Long categoryId,
         int count,
         int sequence
-) { }
+) {
+}

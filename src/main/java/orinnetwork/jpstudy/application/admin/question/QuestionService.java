@@ -1,6 +1,5 @@
 package orinnetwork.jpstudy.application.admin.question;
 
-import jakarta.persistence.EntityNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -91,7 +90,6 @@ public class QuestionService {
 
         Map<Long, QuestionCategory> categoryMap = categoryRepository.findAllById(reqCategoryIds).stream()
                 .collect(Collectors.toMap(QuestionCategory::getId, Function.identity()));
-
 
         List<Question> questionsToSave = new ArrayList<>();
 

@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,6 +22,7 @@ import orinnetwork.jpstudy.domain.log.LoginHistory;
 import orinnetwork.jpstudy.domain.log.LoginHistoryRepository;
 import orinnetwork.jpstudy.domain.member.LocalMember;
 import orinnetwork.jpstudy.domain.member.Member;
+import orinnetwork.jpstudy.domain.member.MemberRepository;
 import orinnetwork.jpstudy.domain.member.Role;
 import orinnetwork.jpstudy.domain.member.UsernameValidator;
 import orinnetwork.jpstudy.domain.notification.NotificationMessage;
@@ -31,7 +31,6 @@ import orinnetwork.jpstudy.infrastructure.email.EmailService;
 import orinnetwork.jpstudy.infrastructure.exception.CustomException;
 import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
 import orinnetwork.jpstudy.infrastructure.jwt.JwtProvider;
-import orinnetwork.jpstudy.domain.member.MemberRepository;
 import orinnetwork.jpstudy.infrastructure.security.CustomUserDetails;
 
 @Service
@@ -260,8 +259,8 @@ public class AuthService {
             throw new CustomException(ErrorCode.INVALID_INPUT);
         }
 
-            String lockoutKey = LOGIN_FAIL_PREFIX + userEmail;
-            authRedisTemplate.delete(lockoutKey);
-            authRedisTemplate.delete(redisKey);
+        String lockoutKey = LOGIN_FAIL_PREFIX + userEmail;
+        authRedisTemplate.delete(lockoutKey);
+        authRedisTemplate.delete(redisKey);
     }
 }

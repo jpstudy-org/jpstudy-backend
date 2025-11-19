@@ -5,7 +5,6 @@ import lombok.Builder;
 import lombok.Getter;
 import orinnetwork.jpstudy.application.admin.dictionary.kanji.dto.KanjiResponse;
 import orinnetwork.jpstudy.domain.word.Word;
-import orinnetwork.jpstudy.domain.word.WordTag;
 
 @Getter
 public class WordResponse {
@@ -19,7 +18,8 @@ public class WordResponse {
     private final List<TagResponse> tags;
 
     @Builder
-    public WordResponse(Long id, String term, String reading, int level, List<KanjiResponse> kanjis, List<MeaningResponse> meanings, List<TagResponse> tags) {
+    public WordResponse(Long id, String term, String reading, int level, List<KanjiResponse> kanjis,
+                        List<MeaningResponse> meanings, List<TagResponse> tags) {
         this.id = id;
         this.term = term;
         this.reading = reading;

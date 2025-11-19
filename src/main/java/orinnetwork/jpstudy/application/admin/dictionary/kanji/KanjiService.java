@@ -5,7 +5,6 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import orinnetwork.jpstudy.application.admin.dictionary.kanji.dto.KanjiRequest;
@@ -69,8 +68,7 @@ public class KanjiService {
                         req.getLevel()
                 );
                 savedKanji = kanji;
-            }
-            else {
+            } else {
                 Kanji newKanji = req.toEntity();
                 savedKanji = kanjiRepository.save(newKanji);
             }

@@ -57,7 +57,8 @@ public class MemberWordProgress {
     private LocalDateTime nextReviewAt;
 
     @Builder
-    public MemberWordProgress(Member member, Word word, MasteryLevel masteryLevel, LocalDateTime lastReviewedAt, LocalDateTime nextReviewAt) {
+    public MemberWordProgress(Member member, Word word, MasteryLevel masteryLevel, LocalDateTime lastReviewedAt,
+                              LocalDateTime nextReviewAt) {
         this.member = member;
         this.word = word;
         this.masteryLevel = masteryLevel;

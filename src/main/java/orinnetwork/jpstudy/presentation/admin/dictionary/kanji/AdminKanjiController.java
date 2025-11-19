@@ -1,9 +1,6 @@
 package orinnetwork.jpstudy.presentation.admin.dictionary.kanji;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -62,6 +59,7 @@ public class AdminKanjiController {
 
     /**
      * 한자 수정
+     *
      * @param kanjiRequest 수정 정보
      */
     @PutMapping
@@ -74,6 +72,7 @@ public class AdminKanjiController {
 
     /**
      * 한자 삭제
+     *
      * @param kanjiRequest 삭제 할 한자 정보
      */
     @DeleteMapping

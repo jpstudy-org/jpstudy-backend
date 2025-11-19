@@ -1,6 +1,5 @@
 package orinnetwork.jpstudy.application.member;
 
-import io.netty.util.internal.StringUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +22,7 @@ public class MemberService {
 
     /**
      * 마이페이지 : 프로필 조회
+     *
      * @param userId 프로필 ID
      */
     @Transactional(readOnly = true)
@@ -52,6 +52,7 @@ public class MemberService {
 
     /**
      * 마이페이지 : 탈퇴
+     *
      * @param userId 탈퇴할 ID
      */
     @Transactional
@@ -78,25 +79,22 @@ public class MemberService {
             long requiredExperience = calculateRequiredExperienceForNextLevel(member.getLevel());
             if (member.getExperience() >= requiredExperience) {
                 member.levelUp(requiredExperience);
+            } else {
+                break;
             }
-            else break;
         }
     }
 
     private long calculateRequiredExperienceForNextLevel(int currentLevel) {
         if (currentLevel < 10) {
             return (currentLevel * 5L) + 10;
-        }
-        else if (currentLevel < 30) {
+        } else if (currentLevel < 30) {
             return (currentLevel * 50L) + 50;
-        }
-        else if (currentLevel < 50) {
+        } else if (currentLevel < 50) {
             return (currentLevel * 150L) + 1000;
-        }
-        else if (currentLevel < 100){
+        } else if (currentLevel < 100) {
             return (currentLevel * 400L) + 5000;
-        }
-        else {
+        } else {
             return Long.MAX_VALUE;
         }
     }

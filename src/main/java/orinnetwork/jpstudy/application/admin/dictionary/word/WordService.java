@@ -5,7 +5,6 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import orinnetwork.jpstudy.application.admin.dictionary.word.dto.MeaningRequest;
@@ -145,7 +144,6 @@ public class WordService {
         Page<WordResponse> responses = wordPage.map(WordResponse::from);
         return new CustomPageResponse<>(responses);
     }
-
 
     // === PRIVATE HELPER METHOD ===
 

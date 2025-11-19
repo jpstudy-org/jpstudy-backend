@@ -75,6 +75,7 @@ public class ExamService {
 
     /**
      * 특정 시험지의 상세 정보(문제 목록 포함)를 조회합니다.
+     *
      * @param examId 조회할 시험지의 ID
      * @return 시험지 정보와 문제 DTO 목록이 포함된 ExamResponseDto
      */

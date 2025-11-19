@@ -22,8 +22,7 @@ public class KanjiSearchResponse {
 
         if ("en".equalsIgnoreCase(lang) || "jp".equalsIgnoreCase(lang)) {
             this.meaning = kanji.getMeaningEn();
-        }
-        else {
+        } else {
             this.meaning = kanji.getMeaning();
         }
     }

@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import orinnetwork.jpstudy.application.notification.NotificationService;
 import orinnetwork.jpstudy.application.notification.dto.NotificationResponse;
-import orinnetwork.jpstudy.domain.notification.Notification;
 import orinnetwork.jpstudy.infrastructure.security.CustomUserDetails;
 
 @RestController

@@ -1,6 +1,5 @@
 package orinnetwork.jpstudy.application.admin.questionbank.category;
 
-import com.nimbusds.openid.connect.sdk.id.SectorID;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

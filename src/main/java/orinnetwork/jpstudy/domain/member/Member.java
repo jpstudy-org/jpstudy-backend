@@ -21,8 +21,6 @@ import java.util.List;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import orinnetwork.jpstudy.domain.BaseEntity;
 
 @Entity
@@ -80,8 +78,7 @@ public abstract class Member extends BaseEntity {
 
     /**
      *
-     * @param experienceToAdd
-     * 경험치 추가 로직
+     * @param experienceToAdd 경험치 추가 로직
      */
     public void addExperience(int experienceToAdd) {
         if (experienceToAdd > 0) {
@@ -91,11 +88,10 @@ public abstract class Member extends BaseEntity {
 
     /**
      *
-     * @param requiredExperience
-     * 레벨업 처리 로직
+     * @param requiredExperience 레벨업 처리 로직
      */
     public void levelUp(long requiredExperience) {
-        this.level ++;
+        this.level++;
         this.experience -= requiredExperience;
     }
 

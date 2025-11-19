@@ -6,8 +6,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import orinnetwork.jpstudy.application.dto.CustomPageResponse;
-import orinnetwork.jpstudy.application.post.dto.PostRequest;
 import orinnetwork.jpstudy.application.post.dto.PostDetailResponse;
+import orinnetwork.jpstudy.application.post.dto.PostRequest;
 import orinnetwork.jpstudy.application.post.dto.PostSummaryResponse;
 import orinnetwork.jpstudy.domain.category.Category;
 import orinnetwork.jpstudy.domain.category.CategoryRepository;
@@ -32,8 +32,9 @@ public class PostService {
 
     /**
      * 게시물 생성
+     *
      * @param postRequest 게시물 작성 DTO
-     * @param memberId 사용자 ID
+     * @param memberId    사용자 ID
      * @return 저장 형태 반환
      */
     @Transactional
@@ -66,6 +67,7 @@ public class PostService {
 
     /**
      * 게시물 조회 (단일)
+     *
      * @param id 게시물 ID
      * @return 게시물 내용
      */
@@ -85,7 +87,8 @@ public class PostService {
 
     /**
      * 게시물 삭제
-     * @param id 게시물 ID
+     *
+     * @param id       게시물 ID
      * @param memberId 사용자 ID
      */
     @Transactional
@@ -102,6 +105,7 @@ public class PostService {
 
     /**
      * 게시물 페이징 조회
+     *
      * @param pageable 페이지 번호
      * @return 해당 페이지 게시물 [PostSummaryResponseDto]
      */

@@ -18,8 +18,9 @@ public class KanjiSearchService {
 
     /**
      * 사용자 한자 조회 기능
-     * @param keyword 키워드
-     * @param lang 언어
+     *
+     * @param keyword  키워드
+     * @param lang     언어
      * @param pageable 페이징
      * @return 페이징
      */

@@ -97,7 +97,7 @@ public class AuthController {
     @PostMapping("/password-reset-request")
     public ResponseEntity<Void> requestPasswordReset(
             @Valid @RequestBody PasswordResetRequest request
-            ) {
+    ) {
         authService.requestPasswordReset(request);
 
         return ResponseEntity.ok().build();
@@ -106,7 +106,7 @@ public class AuthController {
     @PostMapping("/password-reset-confirm")
     public ResponseEntity<Void> confirmPasswordReset(
             @Valid @RequestBody PasswordResetConfirm request
-            ) {
+    ) {
         authService.confirmPasswordReset(request);
         return ResponseEntity.ok().build();
     }

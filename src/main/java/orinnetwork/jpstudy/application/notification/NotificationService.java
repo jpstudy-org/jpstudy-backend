@@ -48,7 +48,8 @@ public class NotificationService {
     }
 
     @Transactional
-    public void send(Long recipientId, NotificationType type, NotificationMessage messageCode, String languageCode, String url, Object... args) {
+    public void send(Long recipientId, NotificationType type, NotificationMessage messageCode, String languageCode,
+                     String url, Object... args) {
 
         Locale locale = Locale.ENGLISH;
         if ("ko".equalsIgnoreCase(languageCode)) {
@@ -83,6 +84,7 @@ public class NotificationService {
 
     /**
      * 안 읽은 알림 개수 조회
+     *
      * @param recipientId 사용자 ID
      * @return 알림 개수
      */
@@ -93,6 +95,7 @@ public class NotificationService {
 
     /**
      * 전체 읽음 처리
+     *
      * @param recipientId 사용자 ID
      */
     @Transactional
@@ -102,8 +105,9 @@ public class NotificationService {
 
     /**
      * 선택 읽음 처리
+     *
      * @param notificationId 알림 ID
-     * @param memberId 사용자 ID
+     * @param memberId       사용자 ID
      */
     @Transactional
     public void markAsRead(Long notificationId, Long memberId) {
