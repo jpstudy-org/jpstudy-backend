@@ -19,12 +19,16 @@ public enum MasteryLevel {
     private final Duration baseInterval;
 
     public MasteryLevel getNextLevel() {
-        if (this == MASTERED) return MASTERED;
+        if (this == MASTERED) {
+            return MASTERED;
+        }
         return values()[this.ordinal() + 1];
     }
 
     public MasteryLevel getPreviousLevel() {
-        if (this == NEW) return NEW;
+        if (this == NEW) {
+            return NEW;
+        }
         return values()[this.ordinal() - 1];
     }
 }

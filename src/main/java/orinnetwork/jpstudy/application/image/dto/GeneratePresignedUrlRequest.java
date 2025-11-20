@@ -4,4 +4,5 @@ public record GeneratePresignedUrlRequest(
         String fileName,
         long fileSize,
         String contentType
-) { }
+) {
+}

@@ -7,6 +7,7 @@ public class IpUtil {
 
     /**
      * Cloudflare 및 프록시 환경을 고려하여 실제 클라이언트 IP를 반환합니다.
+     *
      * @param request HttpServletRequest
      * @return 클라이언트 IP 주소
      */

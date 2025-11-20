@@ -24,7 +24,7 @@ public class WordProgressController {
     @GetMapping("/session")
     public ResponseEntity<StudySessionResponse> getStudySession(
             @AuthenticationPrincipal CustomUserDetails userDetails
-            ) {
+    ) {
         Long memberId = userDetails.getMemberId();
         StudySessionResponse session = wordProgressService.getStudySession(memberId);
 
@@ -35,7 +35,7 @@ public class WordProgressController {
     public ResponseEntity<Void> submitReview(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody ReviewRequest request
-            ) {
+    ) {
         Long memberId = userDetails.getMemberId();
         wordProgressService.updateProgress(
                 memberId,

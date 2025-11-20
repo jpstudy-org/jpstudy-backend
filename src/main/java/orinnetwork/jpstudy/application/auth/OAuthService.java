@@ -1,6 +1,8 @@
 package orinnetwork.jpstudy.application.auth;
 
 import jakarta.transaction.Transactional;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -20,11 +22,16 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequ
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponse;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
-import orinnetwork.jpstudy.application.auth.dto.OAuthLoginRequestDto;
-import orinnetwork.jpstudy.application.auth.dto.TokenResponseDto;
+import orinnetwork.jpstudy.application.auth.dto.OAuthLoginRequest;
+import orinnetwork.jpstudy.application.auth.dto.TokenResponse;
+import orinnetwork.jpstudy.domain.log.LoginHistory;
+import orinnetwork.jpstudy.domain.log.LoginHistoryRepository;
 import orinnetwork.jpstudy.domain.member.MemberRepository;
+import orinnetwork.jpstudy.domain.member.MemberStatus;
 import orinnetwork.jpstudy.domain.member.OauthMember;
 import orinnetwork.jpstudy.domain.member.Role;
+import orinnetwork.jpstudy.infrastructure.exception.CustomException;
+import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
 import orinnetwork.jpstudy.infrastructure.jwt.JwtProvider;
 
 @Service
@@ -35,15 +42,16 @@ public class OAuthService {
     private final JwtProvider jwtProvider;
     private final InMemoryClientRegistrationRepository clientRegistrationRepository;
 
-    private final RedisTemplate<String, String> redisTemplate;
+    private final RedisTemplate<String, String> authRedisTemplate;
     private static final String REFRESH_TOKEN_PREFIX = "RT:";
+    private final LoginHistoryRepository loginHistoryRepository;
 
     @Transactional
-    public TokenResponseDto login(OAuthLoginRequestDto requestDto) {
+    public TokenResponse login(OAuthLoginRequest requestDto, String ipAddress, String userAgent) {
         ClientRegistration provider = clientRegistrationRepository.findByRegistrationId(requestDto.getProvider());
 
         if (provider == null) {
-            throw new IllegalArgumentException("지원하지 않는 소셜 로그인입니다: " + requestDto.getProvider());
+            throw new CustomException(ErrorCode.OAUTH_PROVIDER_NOT_SUPPORTED, requestDto.getProvider());
         }
 
         OAuth2AccessTokenResponse tokenResponse = getToken(provider, requestDto.getAuthorizationCode());
@@ -53,8 +61,30 @@ public class OAuthService {
         OauthMember member = saveOrUpdate(oAuth2User, requestDto.getProvider());
 
         if (member.getDeletedAt() != null) {
-            throw new IllegalArgumentException("탈퇴한 회원입니다");
+            throw new CustomException(ErrorCode.ACCOUNT_DISABLED);
         }
+
+        if (!member.isAccountNonLocked()) {
+            long remainMinutes = 0;
+            if (member.getStatus() == MemberStatus.SUSPENDED && member.getBanExpiresAt() != null) {
+                remainMinutes = Duration.between(LocalDateTime.now(), member.getBanExpiresAt()).toMinutes();
+                remainMinutes = Math.max(1, remainMinutes + 1);
+            }
+            else {
+                // 영구 정지인 경우 (메시지를 별도로 분리하거나, 매우 긴 시간으로 처리)
+                remainMinutes = 999999;
+            }
+
+            throw new CustomException(ErrorCode.ACCOUNT_LOCKED, remainMinutes);
+        }
+
+        LoginHistory loginHistory = LoginHistory.builder()
+                .memberId(member.getId())
+                .ipAddress(ipAddress)
+                .userAgent(userAgent)
+                .build();
+
+        loginHistoryRepository.save(loginHistory);
 
         String accessToken = jwtProvider.createAccessToken(member.getId(), member.getRole());
         String refreshToken = jwtProvider.createRefreshToken(member.getId());
@@ -63,14 +93,14 @@ public class OAuthService {
         String redisKey = REFRESH_TOKEN_PREFIX + memberId;
         long refreshTokenValidityMs = jwtProvider.getRefreshTokenValidityInMilliseconds();
 
-        redisTemplate.opsForValue().set(
+        authRedisTemplate.opsForValue().set(
                 redisKey,
                 refreshToken,
                 refreshTokenValidityMs,
                 TimeUnit.MILLISECONDS
         );
 
-        return new TokenResponseDto(accessToken, refreshToken, member.getUsername(), refreshTokenValidityMs);
+        return new TokenResponse(accessToken, refreshToken, member.getUsername(), refreshTokenValidityMs);
     }
 
 
@@ -90,7 +120,8 @@ public class OAuthService {
                         .build()
         );
 
-        OAuth2AuthorizationCodeGrantRequest grantRequest = new OAuth2AuthorizationCodeGrantRequest(provider, authorizationExchange);
+        OAuth2AuthorizationCodeGrantRequest grantRequest = new OAuth2AuthorizationCodeGrantRequest(provider,
+                authorizationExchange);
         return tokenResponseClient.getTokenResponse(grantRequest);
     }
 
@@ -101,7 +132,7 @@ public class OAuthService {
         try {
             return userService.loadUser(userRequest);
         } catch (OAuth2AuthenticationException e) {
-            throw new RuntimeException("소셜 로그인 사용자 정보를 가져오는 데 실패했습니다.", e);
+            throw new CustomException(ErrorCode.OAUTH_FAIL);
         }
     }
 
@@ -119,16 +150,16 @@ public class OAuthService {
                 email = attributes.get("email").toString();
                 username = attributes.get("name").toString();
             }
-            default -> throw new IllegalArgumentException("지원하지 않는 소셜 로그인입니다: " + providerName);
+            default -> throw new CustomException(ErrorCode.OAUTH_PROVIDER_NOT_SUPPORTED, providerName);
         }
 
-        Optional<OauthMember> memberOptional = memberRepository.findByProviderAndProviderId(lowerCaseProviderName, providerId);
+        Optional<OauthMember> memberOptional = memberRepository.findByProviderAndProviderId(lowerCaseProviderName,
+                providerId);
 
         OauthMember member;
         if (memberOptional.isPresent()) {
             member = memberOptional.get();
-        }
-        else {
+        } else {
             member = new OauthMember(
                     email,
                     username,

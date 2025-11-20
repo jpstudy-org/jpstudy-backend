@@ -12,13 +12,11 @@ public record InquiryResponse(
         String content,
         InquiryStatus status,
         LocalDateTime createdAt,
-        List<AttachmentResponse> attachments
+        List<AttachmentResponse> attachments,
+        String answerContent,
+        LocalDateTime answeredAt
 ) {
-    public static InquiryResponse from(Inquiry entity) {
-        List<AttachmentResponse> attachmentResponses = entity.getAttachments().stream()
-                .map(AttachmentResponse::from)
-                .toList();
-
+    public static InquiryResponse of(Inquiry entity, List<AttachmentResponse> attachmentResponses) {
         return new InquiryResponse(
                 entity.getId(),
                 entity.getMemberId(),
@@ -26,7 +24,9 @@ public record InquiryResponse(
                 entity.getContent(),
                 entity.getStatus(),
                 entity.getCreatedAt(),
-                attachmentResponses
+                attachmentResponses,
+                entity.getAnswerContent(),
+                entity.getAnsweredAt()
         );
     }
 }

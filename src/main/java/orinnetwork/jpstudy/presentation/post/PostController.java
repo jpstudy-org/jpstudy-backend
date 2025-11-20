@@ -4,7 +4,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -20,8 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import orinnetwork.jpstudy.application.dto.CustomPageResponse;
 import orinnetwork.jpstudy.application.post.PostService;
-import orinnetwork.jpstudy.application.post.dto.PostRequest;
 import orinnetwork.jpstudy.application.post.dto.PostDetailResponse;
+import orinnetwork.jpstudy.application.post.dto.PostRequest;
 import orinnetwork.jpstudy.application.post.dto.PostSummaryResponse;
 import orinnetwork.jpstudy.infrastructure.security.CustomUserDetails;
 import orinnetwork.jpstudy.infrastructure.util.IpUtil;
@@ -38,7 +37,7 @@ public class PostController {
             @Valid @RequestBody PostRequest requestDto,
             @AuthenticationPrincipal CustomUserDetails userDetails,
             HttpServletRequest request
-            ) {
+    ) {
 
         Long memberId = userDetails.getMemberId();
         String ipAddress = IpUtil.getClientIp(request);

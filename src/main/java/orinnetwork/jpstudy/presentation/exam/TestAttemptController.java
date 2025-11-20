@@ -25,7 +25,7 @@ public class TestAttemptController {
     public ResponseEntity<StartTestResponse> startTest(
             @PathVariable Long examId,
             @AuthenticationPrincipal CustomUserDetails userDetails
-            ) {
+    ) {
 
         Long memberId = userDetails.getMemberId();
         StartTestResponse response = testAttemptService.startTest(examId, memberId);
@@ -37,7 +37,7 @@ public class TestAttemptController {
             @PathVariable Long attemptId,
             @RequestBody SubmitTestRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails
-            ) {
+    ) {
 
         Long memberId = userDetails.getMemberId();
         TestResultResponse result = testAttemptService.submitTest(attemptId, memberId, request);

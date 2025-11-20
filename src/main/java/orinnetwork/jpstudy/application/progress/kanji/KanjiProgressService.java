@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import orinnetwork.jpstudy.application.progress.kanji.dto.KanjiCardDto;
+import orinnetwork.jpstudy.application.progress.kanji.dto.KanjiCard;
 import orinnetwork.jpstudy.application.progress.kanji.dto.ReviewDifficulty;
 import orinnetwork.jpstudy.application.progress.kanji.dto.StudySessionResponse;
 import orinnetwork.jpstudy.domain.kanji.Kanji;
@@ -17,6 +17,8 @@ import orinnetwork.jpstudy.domain.member.MemberRepository;
 import orinnetwork.jpstudy.domain.progress.MasteryLevel;
 import orinnetwork.jpstudy.domain.progress.MemberKanjiProgress;
 import orinnetwork.jpstudy.domain.progress.MemberKanjiProgressRepository;
+import orinnetwork.jpstudy.infrastructure.exception.CustomException;
+import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
 
 @Service
 @RequiredArgsConstructor
@@ -39,15 +41,15 @@ public class KanjiProgressService {
         List<MemberKanjiProgress> reviewProgressList = progressRepository
                 .findDueForReview(member, now);
 
-        List<KanjiCardDto> reviewCards = reviewProgressList.stream()
-                .map(progress -> new KanjiCardDto(progress.getKanji(), lang))
+        List<KanjiCard> reviewCards = reviewProgressList.stream()
+                .map(progress -> new KanjiCard(progress.getKanji(), lang))
                 .toList();
 
         List<Kanji> newKanjiList = kanjiRepository
                 .findNewKanjiForMember(memberId, PageRequest.of(0, NEW_CARDS_PER_SESSION));
 
-        List<KanjiCardDto> newCards = newKanjiList.stream()
-                .map(kanji -> new KanjiCardDto(kanji, lang))
+        List<KanjiCard> newCards = newKanjiList.stream()
+                .map(kanji -> new KanjiCard(kanji, lang))
                 .toList();
 
         return new StudySessionResponse(reviewCards, newCards);
@@ -59,7 +61,7 @@ public class KanjiProgressService {
 
         Member member = memberRepository.getReferenceById(memberId);
         Kanji kanji = kanjiRepository.findById(kanjiId)
-                .orElseThrow(() -> new IllegalArgumentException("Kanji not found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.KANJI_NOT_FOUND));
 
         MemberKanjiProgress progress = progressRepository
                 .findByMemberAndKanji(member, kanji)

@@ -15,5 +15,6 @@ public record UpdateQuestionRequest(
     public record ChoiceDto(
             String choiceText,
             boolean isCorrect
-    ) {}
+    ) {
+    }
 }

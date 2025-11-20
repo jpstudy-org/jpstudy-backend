@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import orinnetwork.jpstudy.application.progress.word.dto.ReviewDifficulty;
 import orinnetwork.jpstudy.application.progress.word.dto.StudySessionResponse;
-import orinnetwork.jpstudy.application.progress.word.dto.WordCardDto;
+import orinnetwork.jpstudy.application.progress.word.dto.WordCard;
 import orinnetwork.jpstudy.domain.member.Member;
 import orinnetwork.jpstudy.domain.member.MemberRepository;
 import orinnetwork.jpstudy.domain.progress.MasteryLevel;
@@ -17,6 +17,8 @@ import orinnetwork.jpstudy.domain.progress.MemberWordProgress;
 import orinnetwork.jpstudy.domain.progress.MemberWordProgressRepository;
 import orinnetwork.jpstudy.domain.word.Word;
 import orinnetwork.jpstudy.domain.word.WordRepository;
+import orinnetwork.jpstudy.infrastructure.exception.CustomException;
+import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
 
 @Service
 @RequiredArgsConstructor
@@ -39,17 +41,15 @@ public class WordProgressService {
         List<MemberWordProgress> reviewProgressList = progressRepository
                 .findDueForReview(member, now);
 
-        List<WordCardDto> reviewCards = reviewProgressList.stream()
-                .map(progress -> new WordCardDto(progress.getWord(), lang))
+        List<WordCard> reviewCards = reviewProgressList.stream()
+                .map(progress -> new WordCard(progress.getWord(), lang))
                 .toList();
-
-
 
         List<Word> newWordList = wordRepository
                 .findNewWordForMember(memberId, PageRequest.of(0, NEW_CARDS_PER_SESSION));
 
-        List<WordCardDto> newCards = newWordList.stream()
-                .map(word -> new WordCardDto(word, lang))
+        List<WordCard> newCards = newWordList.stream()
+                .map(word -> new WordCard(word, lang))
                 .toList();
 
         return new StudySessionResponse(reviewCards, newCards);
@@ -61,7 +61,7 @@ public class WordProgressService {
 
         Member member = memberRepository.getReferenceById(memberId);
         Word word = wordRepository.findById(wordId)
-                .orElseThrow(() -> new IllegalArgumentException("Word not found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.WORD_NOT_FOUND));
 
         MemberWordProgress progress = progressRepository
                 .findByMemberAndWord(member, word)

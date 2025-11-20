@@ -5,7 +5,6 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import orinnetwork.jpstudy.application.admin.dictionary.word.dto.MeaningRequest;
@@ -25,6 +24,8 @@ import orinnetwork.jpstudy.domain.word.WordKanjiRepository;
 import orinnetwork.jpstudy.domain.word.WordRepository;
 import orinnetwork.jpstudy.domain.word.WordTag;
 import orinnetwork.jpstudy.domain.word.WordTagRepository;
+import orinnetwork.jpstudy.infrastructure.exception.CustomException;
+import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
 
 @Service
 @RequiredArgsConstructor
@@ -102,7 +103,7 @@ public class WordService {
     @Transactional
     public void deleteWord(WordRequest wordRequest) {
         Word word = wordRepository.findByTerm(wordRequest.getTerm())
-                .orElseThrow(() -> new IllegalArgumentException("해당 단어는 존재하지 않습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.WORD_NOT_FOUND));
 
         word.softDelete();
     }
@@ -112,7 +113,7 @@ public class WordService {
     public WordResponse updateWord(WordRequest request) {
 
         Word word = wordRepository.findByTerm(request.getTerm())
-                .orElseThrow(() -> new IllegalArgumentException("해당 단어는 존재하지 않습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.WORD_NOT_FOUND));
 
         List<Kanji> foundKanjis = findAndValidateKanjis(request.getKanjiCharacters());
 
@@ -144,12 +145,11 @@ public class WordService {
         return new CustomPageResponse<>(responses);
     }
 
-
     // === PRIVATE HELPER METHOD ===
 
     private void validateDuplicateWord(String term) {
         if (wordRepository.existsByTermAndDeletedAtIsNull(term)) {
-            throw new IllegalArgumentException("이미 등록된 단어입니다: " + term);
+            throw new CustomException(ErrorCode.WORD_ALREADY_EXISTS, term);
         }
     }
 

@@ -2,7 +2,6 @@ package orinnetwork.jpstudy.application.admin.dictionary.word.dto;
 
 import lombok.Builder;
 import lombok.Getter;
-import orinnetwork.jpstudy.domain.word.Meaning;
 import orinnetwork.jpstudy.domain.word.Tag;
 
 @Getter

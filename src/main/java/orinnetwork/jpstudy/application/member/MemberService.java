@@ -1,6 +1,5 @@
 package orinnetwork.jpstudy.application.member;
 
-import io.netty.util.internal.StringUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,6 +9,8 @@ import orinnetwork.jpstudy.application.member.dto.MemberUpdateRequest;
 import orinnetwork.jpstudy.domain.member.Member;
 import orinnetwork.jpstudy.domain.member.MemberRepository;
 import orinnetwork.jpstudy.domain.member.UsernameValidator;
+import orinnetwork.jpstudy.infrastructure.exception.CustomException;
+import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
 
 @Service
 @RequiredArgsConstructor
@@ -21,12 +22,13 @@ public class MemberService {
 
     /**
      * 마이페이지 : 프로필 조회
+     *
      * @param userId 프로필 ID
      */
     @Transactional(readOnly = true)
     public MemberProfileResponse getMyProfile(Long userId) {
         Member member = memberRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         return MemberProfileResponse.from(member);
     }
@@ -35,7 +37,7 @@ public class MemberService {
     @Transactional
     public void updateProfile(Long userId, MemberUpdateRequest request) {
         Member member = memberRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         if (StringUtils.hasText(request.getUsername())) {
             usernameValidator.validate(request.getUsername());
@@ -50,12 +52,13 @@ public class MemberService {
 
     /**
      * 마이페이지 : 탈퇴
+     *
      * @param userId 탈퇴할 ID
      */
     @Transactional
     public void withdrawMember(Long userId) {
         Member member = memberRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         member.withdraw();
     }
@@ -63,7 +66,7 @@ public class MemberService {
     @Transactional
     public void addExperience(Long userId, int experienceToAdd) {
         Member member = memberRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         member.addExperience(experienceToAdd);
         checkAndProcessLevelUp(member);
@@ -76,25 +79,22 @@ public class MemberService {
             long requiredExperience = calculateRequiredExperienceForNextLevel(member.getLevel());
             if (member.getExperience() >= requiredExperience) {
                 member.levelUp(requiredExperience);
+            } else {
+                break;
             }
-            else break;
         }
     }
 
     private long calculateRequiredExperienceForNextLevel(int currentLevel) {
         if (currentLevel < 10) {
             return (currentLevel * 5L) + 10;
-        }
-        else if (currentLevel < 30) {
+        } else if (currentLevel < 30) {
             return (currentLevel * 50L) + 50;
-        }
-        else if (currentLevel < 50) {
+        } else if (currentLevel < 50) {
             return (currentLevel * 150L) + 1000;
-        }
-        else if (currentLevel < 100){
+        } else if (currentLevel < 100) {
             return (currentLevel * 400L) + 5000;
-        }
-        else {
+        } else {
             return Long.MAX_VALUE;
         }
     }

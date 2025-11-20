@@ -26,7 +26,7 @@ public class KanjiSearchController {
             @RequestParam(required = false) String keyword,
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @PageableDefault(size = 20) Pageable pageable
-            ) {
+    ) {
 
         String lang = customUserDetails.getLanguage();
         CustomPageResponse<KanjiSearchResponse> results = kanjiSearchService.searchKanjis(keyword, lang, pageable);

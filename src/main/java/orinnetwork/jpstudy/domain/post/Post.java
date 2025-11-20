@@ -14,7 +14,6 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 import orinnetwork.jpstudy.domain.BaseEntity;
 import orinnetwork.jpstudy.domain.category.Category;
@@ -63,7 +62,8 @@ public class Post extends BaseEntity {
     private int commentCount;
 
     @Builder
-    public Post(String title, String content, Member member, Category category, PostType postType, PostStatus postStatus, String ipAddress) {
+    public Post(String title, String content, Member member, Category category, PostType postType,
+                PostStatus postStatus, String ipAddress) {
         this.title = title;
         this.content = content;
         this.member = member;

@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class OAuthLoginRequestDto {
+public class OAuthLoginRequest {
 
     @NotBlank(message = "인증 코드는 필수입니다.")
     private String authorizationCode;

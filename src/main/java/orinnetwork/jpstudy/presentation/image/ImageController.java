@@ -20,7 +20,7 @@ public class ImageController {
     @PostMapping("/presigned-url")
     public ResponseEntity<GeneratePresignedUrlResponse> generatePresignedUrl(
             @RequestBody GeneratePresignedUrlRequest request
-            ) {
+    ) {
         GeneratePresignedUrlResponse response = imageService.generatePresignedUrl(request);
         return ResponseEntity.ok(response);
     }

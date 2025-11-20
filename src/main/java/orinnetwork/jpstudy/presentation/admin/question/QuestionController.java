@@ -31,6 +31,7 @@ public class QuestionController {
 
     /**
      * 새로운 문제 생성 (단일)
+     *
      * @param request 문제 내용, 선택지, 정답, 레벨, 카테고리 정보
      * @return 생성된 문제의 상세 정보
      */
@@ -45,13 +46,15 @@ public class QuestionController {
      * 새로운 문제 생성 (다중)
      */
     @PostMapping("/mult")
-    public ResponseEntity<List<QuestionResponse>> createQuestions(@RequestBody List<CreateQuestionRequest> questionRequests) {
+    public ResponseEntity<List<QuestionResponse>> createQuestions(
+            @RequestBody List<CreateQuestionRequest> questionRequests) {
         List<QuestionResponse> responses = questionService.createOrUpdateQuestionsFromCSV(questionRequests);
         return ResponseEntity.status(HttpStatus.CREATED).body(responses);
     }
 
     /**
      * 문제 조회 페이징
+     *
      * @param pageable 페이징 번호
      * @return Pages
      */
@@ -65,6 +68,7 @@ public class QuestionController {
 
     /**
      * 특정 문제를 조회하는 API
+     *
      * @param questionId 조회할 문제의 ID
      * @return 문제 상세 정보
      */
@@ -76,8 +80,9 @@ public class QuestionController {
 
     /**
      * 특정 문제를 수정하는 API (관리자용)
+     *
      * @param questionId 수정할 문제의 ID
-     * @param request 수정할 내용
+     * @param request    수정할 내용
      * @return 수정된 문제의 상세 정보
      */
     @PutMapping("/{questionId}")
@@ -90,6 +95,7 @@ public class QuestionController {
 
     /**
      * 특정 문제를 삭제하는 API (관리자용)
+     *
      * @param questionId 삭제할 문제의 ID
      * @return 성공 시 내용 없음(No Content) 응답
      */

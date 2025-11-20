@@ -6,14 +6,14 @@ import orinnetwork.jpstudy.domain.word.Meaning;
 import orinnetwork.jpstudy.domain.word.Word;
 
 @Getter
-public class WordCardDto {
+public class WordCard {
 
     private final Long wordId;
     private final String term;
     private final String reading;
     private final List<String> meanings;
 
-    public WordCardDto(Word word, String lang) {
+    public WordCard(Word word, String lang) {
         this.wordId = word.getId();
         this.term = word.getTerm();
         this.reading = word.getReading();

@@ -8,7 +8,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import orinnetwork.jpstudy.application.auth.dto.TokenResponseDto;
+import orinnetwork.jpstudy.application.auth.dto.TokenResponse;
 import orinnetwork.jpstudy.presentation.auth.dto.AccessTokenResponse;
 
 @Component
@@ -18,7 +18,7 @@ public class AuthResponseHelper {
     private final Environment env;
 
     public ResponseEntity<AccessTokenResponse> createTokenResponse(
-            TokenResponseDto tokenDto,
+            TokenResponse tokenDto,
             HttpServletResponse response) {
 
         boolean isProduction = Arrays.asList(env.getActiveProfiles()).contains("prod");

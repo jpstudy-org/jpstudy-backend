@@ -30,6 +30,7 @@ public class AdminWordController {
 
     /**
      * 단어 생성 (단일)
+     *
      * @param wordRequest 단어 정보
      */
     @PostMapping
@@ -41,6 +42,7 @@ public class AdminWordController {
 
     /**
      * 단어 생성 (다중)
+     *
      * @param wordRequests 단어 정보 리스트
      */
     @PostMapping("/mult")
@@ -51,7 +53,8 @@ public class AdminWordController {
 
     /**
      * 단어 조회 (페이징)
-     * @param keyword 검색어
+     *
+     * @param keyword  검색어
      * @param pageable 페이징 정보
      */
     @GetMapping
@@ -65,6 +68,7 @@ public class AdminWordController {
 
     /**
      * 단어 수정
+     *
      * @param wordRequest 수정 정보
      */
     @PutMapping
@@ -76,6 +80,7 @@ public class AdminWordController {
 
     /**
      * 단어 삭제
+     *
      * @param wordRequest 삭제 할 Word 정보
      */
     @DeleteMapping

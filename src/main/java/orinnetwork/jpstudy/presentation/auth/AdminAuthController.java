@@ -1,5 +1,6 @@
 package orinnetwork.jpstudy.presentation.auth;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -11,8 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import orinnetwork.jpstudy.application.auth.AdminAuthservice;
-import orinnetwork.jpstudy.application.auth.dto.LoginRequestDto;
-import orinnetwork.jpstudy.application.auth.dto.TokenResponseDto;
+import orinnetwork.jpstudy.application.auth.dto.LoginRequest;
+import orinnetwork.jpstudy.application.auth.dto.TokenResponse;
+import orinnetwork.jpstudy.infrastructure.util.IpUtil;
 import orinnetwork.jpstudy.presentation.auth.dto.AccessTokenResponse;
 
 @RestController
@@ -26,10 +28,14 @@ public class AdminAuthController {
 
     @PostMapping("/login")
     public ResponseEntity<AccessTokenResponse> login(
-            @Valid @RequestBody LoginRequestDto request,
-            HttpServletResponse response
+            @Valid @RequestBody LoginRequest request,
+            HttpServletResponse response,
+            HttpServletRequest httpServletRequest
     ) {
-        TokenResponseDto token = authService.login(request);
+        final String ipAddress = IpUtil.getClientIp(httpServletRequest);
+        final String userAgent = httpServletRequest.getHeader("User-Agent");
+
+        TokenResponse token = authService.login(request, ipAddress, userAgent);
 
         return authResponseHelper.createTokenResponse(token, response);
     }
@@ -52,7 +58,7 @@ public class AdminAuthController {
             return ResponseEntity.status(401).build();
         }
 
-        TokenResponseDto tokenResponse = authService.reissueToken(refreshToken);
+        TokenResponse tokenResponse = authService.reissueToken(refreshToken);
 
         return authResponseHelper.createTokenResponse(tokenResponse, response);
     }

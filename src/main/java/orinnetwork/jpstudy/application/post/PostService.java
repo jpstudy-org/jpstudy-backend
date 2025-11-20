@@ -6,8 +6,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import orinnetwork.jpstudy.application.dto.CustomPageResponse;
-import orinnetwork.jpstudy.application.post.dto.PostRequest;
 import orinnetwork.jpstudy.application.post.dto.PostDetailResponse;
+import orinnetwork.jpstudy.application.post.dto.PostRequest;
 import orinnetwork.jpstudy.application.post.dto.PostSummaryResponse;
 import orinnetwork.jpstudy.domain.category.Category;
 import orinnetwork.jpstudy.domain.category.CategoryRepository;
@@ -17,6 +17,8 @@ import orinnetwork.jpstudy.domain.post.Post;
 import orinnetwork.jpstudy.domain.post.PostRepository;
 import orinnetwork.jpstudy.domain.post.PostStatus;
 import orinnetwork.jpstudy.domain.post.PostType;
+import orinnetwork.jpstudy.infrastructure.exception.CustomException;
+import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
 
 @Service
 @RequiredArgsConstructor
@@ -30,21 +32,22 @@ public class PostService {
 
     /**
      * 게시물 생성
+     *
      * @param postRequest 게시물 작성 DTO
-     * @param memberId 사용자 ID
+     * @param memberId    사용자 ID
      * @return 저장 형태 반환
      */
     @Transactional
     public PostDetailResponse createPost(PostRequest postRequest, Long memberId, String ipAddress) {
         Member author = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 멤버를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         Category category = null;
         Long categoryId = postRequest.getCategoryId();
 
         if (categoryId != null) {
             category = categoryRepository.findById(categoryId)
-                    .orElseThrow(() -> new IllegalArgumentException("해당 ID의 카테고리를 찾을 수 없습니다."));
+                    .orElseThrow(() -> new CustomException(ErrorCode.POST_CATEGORY_NOT_FOUND));
         }
 
         Post newPost = Post.builder()
@@ -64,16 +67,17 @@ public class PostService {
 
     /**
      * 게시물 조회 (단일)
+     *
      * @param id 게시물 ID
      * @return 게시물 내용
      */
     @Transactional
     public PostDetailResponse getPostById(Long id) {
         Post post = postRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
 
         if (post.getPostStatus() != PostStatus.ACTIVE) {
-            throw new IllegalArgumentException("조회할 수 없는 게시글입니다.");
+            throw new CustomException(ErrorCode.POST_NOT_ACTIVE);
         }
 
         post.increaseViewCount();
@@ -83,16 +87,17 @@ public class PostService {
 
     /**
      * 게시물 삭제
-     * @param id 게시물 ID
+     *
+     * @param id       게시물 ID
      * @param memberId 사용자 ID
      */
     @Transactional
     public void deletePost(Long id, Long memberId) {
         Post post = postRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 게시물을 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
 
         if (!post.getMember().getId().equals(memberId)) {
-            throw new IllegalArgumentException("게시글 삭제 권한이 없습니다.");
+            throw new CustomException(ErrorCode.POST_NOT_OWNER);
         }
 
         post.delete();
@@ -100,6 +105,7 @@ public class PostService {
 
     /**
      * 게시물 페이징 조회
+     *
      * @param pageable 페이지 번호
      * @return 해당 페이지 게시물 [PostSummaryResponseDto]
      */

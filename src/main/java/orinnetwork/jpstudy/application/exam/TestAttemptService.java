@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import orinnetwork.jpstudy.application.exam.dto.StartTestResponse;
@@ -27,6 +26,8 @@ import orinnetwork.jpstudy.domain.questionbank.Choice;
 import orinnetwork.jpstudy.domain.questionbank.ChoiceRepository;
 import orinnetwork.jpstudy.domain.questionbank.Question;
 import orinnetwork.jpstudy.domain.questionbank.QuestionRepository;
+import orinnetwork.jpstudy.infrastructure.exception.CustomException;
+import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
 
 @Service
 @RequiredArgsConstructor
@@ -43,10 +44,10 @@ public class TestAttemptService {
 
     public StartTestResponse startTest(Long examId, Long memberId) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         Exam exam = examRepository.findById(examId)
-                .orElseThrow(() -> new IllegalArgumentException("시험지를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.EXAM_NOT_FOUND));
 
         TestAttempt attempt = TestAttempt.builder()
                 .member(member)
@@ -60,14 +61,14 @@ public class TestAttemptService {
 
     public TestResultResponse submitTest(Long attemptId, Long memberId, SubmitTestRequest request) {
         TestAttempt attempt = testAttemptRepository.findById(attemptId)
-                .orElseThrow(() -> new IllegalArgumentException("응시 기록을 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.TEST_ATTEMPT_NOT_FOUND));
 
         if (!attempt.getMember().getId().equals(memberId)) {
-            throw new AccessDeniedException("시험 응시자 본인만 제출할 수 있습니다.");
+            throw new CustomException(ErrorCode.EXAM_NOT_OWNER);
         }
 
         if (attempt.getStatus() == AttemptStatus.COMPLETED) {
-            throw new IllegalArgumentException("이미 제출된 시험입니다.");
+            throw new CustomException(ErrorCode.TEST_ALREADY_SUBMITTED);
         }
 
         List<UserAnswer> userAnswers = request.answers();

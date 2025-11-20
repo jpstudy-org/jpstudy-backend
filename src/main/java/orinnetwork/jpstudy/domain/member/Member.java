@@ -21,8 +21,6 @@ import java.util.List;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import orinnetwork.jpstudy.domain.BaseEntity;
 
 @Entity
@@ -48,7 +46,7 @@ public abstract class Member extends BaseEntity {
     private long experience = 0;
 
     @Column(length = 5, nullable = false)
-    private String languagePreference = "kr";
+    private String languagePreference = "en";
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "grade_id")
@@ -61,6 +59,12 @@ public abstract class Member extends BaseEntity {
     @Column(nullable = false)
     private Role role;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private MemberStatus status = MemberStatus.ACTIVE;
+
+    private LocalDateTime banExpiresAt;
+
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
@@ -68,6 +72,30 @@ public abstract class Member extends BaseEntity {
         this.email = email;
         this.username = username;
         this.role = role;
+    }
+
+    public void ban(LocalDateTime expiresAt) {
+        this.banExpiresAt = expiresAt;
+        if (expiresAt == null) {
+            this.status = MemberStatus.BANNED;
+        } else {
+            this.status = MemberStatus.SUSPENDED;
+        }
+    }
+
+    public void unban() {
+        this.status = MemberStatus.ACTIVE;
+        this.banExpiresAt = null;
+    }
+
+    public boolean isAccountNonLocked() {
+        if (this.status == MemberStatus.BANNED) {
+            return false;
+        }
+        if (this.status == MemberStatus.SUSPENDED) {
+            return LocalDateTime.now().isAfter(this.banExpiresAt);
+        }
+        return true;
     }
 
     public void updateProfile(String username) {
@@ -80,8 +108,7 @@ public abstract class Member extends BaseEntity {
 
     /**
      *
-     * @param experienceToAdd
-     * 경험치 추가 로직
+     * @param experienceToAdd 경험치 추가 로직
      */
     public void addExperience(int experienceToAdd) {
         if (experienceToAdd > 0) {
@@ -91,11 +118,10 @@ public abstract class Member extends BaseEntity {
 
     /**
      *
-     * @param requiredExperience
-     * 레벨업 처리 로직
+     * @param requiredExperience 레벨업 처리 로직
      */
     public void levelUp(long requiredExperience) {
-        this.level ++;
+        this.level++;
         this.experience -= requiredExperience;
     }
 

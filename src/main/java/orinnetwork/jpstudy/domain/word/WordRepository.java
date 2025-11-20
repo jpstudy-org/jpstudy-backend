@@ -34,10 +34,10 @@ public interface WordRepository extends JpaRepository<Word, Long> {
             + "SELECT 1 FROM MemberWordProgress p "
             + "WHERE p.word = w AND p.member.id = :memberId"
             + ") ORDER BY w.level DESC, w.id ASC",
-        countQuery = "SELECT count(w) FROM Word w "
-                + "WHERE w.deletedAt IS NULL AND NOT EXISTS ("
-                + "SELECT 1 FROM MemberWordProgress p "
-                + "WHERE p.word = w AND p.member.id = :memberId"
-                + ")")
+            countQuery = "SELECT count(w) FROM Word w "
+                    + "WHERE w.deletedAt IS NULL AND NOT EXISTS ("
+                    + "SELECT 1 FROM MemberWordProgress p "
+                    + "WHERE p.word = w AND p.member.id = :memberId"
+                    + ")")
     List<Word> findNewWordForMember(@Param("memberId") Long memberId, Pageable pageable);
 }

@@ -8,6 +8,8 @@ import orinnetwork.jpstudy.application.admin.questionbank.level.dto.LevelRequest
 import orinnetwork.jpstudy.application.admin.questionbank.level.dto.LevelResponse;
 import orinnetwork.jpstudy.domain.questionbank.Level;
 import orinnetwork.jpstudy.domain.questionbank.LevelRepository;
+import orinnetwork.jpstudy.infrastructure.exception.CustomException;
+import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
 
 @Service
 @RequiredArgsConstructor
@@ -26,20 +28,23 @@ public class LevelService {
 
     public LevelResponse updateLevel(Long levelId, LevelRequest request) {
         Level level = levelRepository.findById(levelId)
-                .orElseThrow(() -> new IllegalArgumentException("Level not found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.LEVEL_NOT_FOUND));
 
         level.updateName(request.name());
         return LevelResponse.fromEntity(level);
     }
 
     public void deleteLevel(Long levelId) {
-        levelRepository.deleteById(levelId);
+        Level level = levelRepository.findById(levelId)
+                .orElseThrow(() -> new CustomException(ErrorCode.LEVEL_NOT_FOUND)); // ★ 변경
+
+        levelRepository.delete(level);
     }
 
     @Transactional(readOnly = true)
     public LevelResponse getLevel(Long levelId) {
         Level level = levelRepository.findById(levelId)
-                .orElseThrow(() -> new IllegalArgumentException("Level not found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.LEVEL_NOT_FOUND));
         return LevelResponse.fromEntity(level);
     }
 

@@ -1,6 +1,5 @@
 package orinnetwork.jpstudy.application.admin.question;
 
-import jakarta.persistence.EntityNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +20,8 @@ import orinnetwork.jpstudy.domain.questionbank.Question;
 import orinnetwork.jpstudy.domain.questionbank.QuestionCategory;
 import orinnetwork.jpstudy.domain.questionbank.QuestionCategoryRepository;
 import orinnetwork.jpstudy.domain.questionbank.QuestionRepository;
+import orinnetwork.jpstudy.infrastructure.exception.CustomException;
+import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
 import orinnetwork.jpstudy.presentation.admin.question.dto.CreateQuestionRequest;
 import orinnetwork.jpstudy.presentation.admin.question.dto.UpdateQuestionRequest;
 
@@ -38,9 +39,9 @@ public class QuestionService {
     @Transactional
     public QuestionResponse createQuestion(CreateQuestionRequest request) {
         Level level = levelRepository.findById(request.levelId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 레벨입니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.LEVEL_NOT_FOUND));
         QuestionCategory category = categoryRepository.findById(request.categoryId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 카테고리입니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.CATEGORY_NOT_FOUND));
 
         Question question = Question.builder()
                 .level(level)
@@ -89,7 +90,6 @@ public class QuestionService {
 
         Map<Long, QuestionCategory> categoryMap = categoryRepository.findAllById(reqCategoryIds).stream()
                 .collect(Collectors.toMap(QuestionCategory::getId, Function.identity()));
-
 
         List<Question> questionsToSave = new ArrayList<>();
 
@@ -148,7 +148,7 @@ public class QuestionService {
     @Transactional(readOnly = true)
     public QuestionResponse getQuestion(Long questionId) {
         Question question = questionRepository.findById(questionId)
-                .orElseThrow(() -> new IllegalArgumentException("문제를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.QUESTION_NOT_FOUND));
 
         return QuestionResponse.fromEntity(question);
     }
@@ -157,13 +157,13 @@ public class QuestionService {
     public QuestionResponse updateQuestion(Long questionId, UpdateQuestionRequest request) {
         // 1. 수정할 Question 엔티티를 조회합니다.
         Question question = questionRepository.findById(questionId)
-                .orElseThrow(() -> new EntityNotFoundException("문제를 찾을 수 없습니다. ID: " + questionId));
+                .orElseThrow(() -> new CustomException(ErrorCode.QUESTION_NOT_FOUND));
 
         // 2. 연관된 Level, Category 엔티티를 조회합니다.
         Level level = levelRepository.findById(request.levelId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 레벨입니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.LEVEL_NOT_FOUND));
         QuestionCategory category = categoryRepository.findById(request.categoryId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 카테고리입니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.CATEGORY_NOT_FOUND));
 
         // 3. Question 엔티티의 내용을 업데이트합니다. (엔티티 내부에 update 메서드를 만드는 것이 더 객체지향적입니다.)
         question.update(
@@ -191,7 +191,7 @@ public class QuestionService {
     @Transactional
     public void deleteQuestion(Long questionId) {
         Question question = questionRepository.findById(questionId)
-                .orElseThrow(() -> new EntityNotFoundException("문제를 찾을 수 없습니다. ID: " + questionId));
+                .orElseThrow(() -> new CustomException(ErrorCode.QUESTION_NOT_FOUND));
 
         questionRepository.delete(question);
     }

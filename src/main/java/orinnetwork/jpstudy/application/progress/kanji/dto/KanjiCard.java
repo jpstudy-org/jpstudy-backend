@@ -4,7 +4,7 @@ import lombok.Getter;
 import orinnetwork.jpstudy.domain.kanji.Kanji;
 
 @Getter
-public class KanjiCardDto {
+public class KanjiCard {
 
     private final Long kanjiId;
     private final String character;
@@ -12,7 +12,7 @@ public class KanjiCardDto {
     private final String onyomi;
     private final String kunyomi;
 
-    public KanjiCardDto(Kanji kanji, String lang) {
+    public KanjiCard(Kanji kanji, String lang) {
         this.kanjiId = kanji.getId();
         this.character = kanji.getCharacter();
         this.onyomi = kanji.getOnyomi();
@@ -20,8 +20,7 @@ public class KanjiCardDto {
 
         if ("en".equalsIgnoreCase(lang) || "jp".equalsIgnoreCase(lang)) {
             this.meaning = kanji.getMeaningEn();
-        }
-        else {
+        } else {
             this.meaning = kanji.getMeaning();
         }
     }

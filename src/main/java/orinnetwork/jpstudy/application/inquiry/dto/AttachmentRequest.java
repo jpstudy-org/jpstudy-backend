@@ -5,4 +5,5 @@ public record AttachmentRequest(
         String originalFileName,
         long fileSize,
         String contentType
-) { }
+) {
+}

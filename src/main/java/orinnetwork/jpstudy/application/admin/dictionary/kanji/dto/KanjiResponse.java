@@ -17,7 +17,8 @@ public class KanjiResponse {
     private final int level;
 
     @Builder
-    public KanjiResponse(String character, String meaning, String meaningEn, String onyomi, String kunyomi, int strokeCount, String radical, int level) {
+    public KanjiResponse(String character, String meaning, String meaningEn, String onyomi, String kunyomi,
+                         int strokeCount, String radical, int level) {
         this.character = character;
         this.meaning = meaning;
         this.meaningEn = meaningEn;

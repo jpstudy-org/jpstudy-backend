@@ -1,6 +1,5 @@
 package orinnetwork.jpstudy.application.member.dto;
 
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

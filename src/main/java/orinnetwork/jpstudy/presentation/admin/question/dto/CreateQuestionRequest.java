@@ -14,5 +14,6 @@ public record CreateQuestionRequest(
     public record ChoiceDto(
             String choiceText,
             boolean isCorrect
-    ) {}
+    ) {
+    }
 }

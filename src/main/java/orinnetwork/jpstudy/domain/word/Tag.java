@@ -1,6 +1,5 @@
 package orinnetwork.jpstudy.domain.word;
 
-import com.azure.core.annotation.Get;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

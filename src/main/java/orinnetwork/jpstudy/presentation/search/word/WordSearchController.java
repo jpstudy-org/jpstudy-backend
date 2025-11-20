@@ -1,6 +1,5 @@
 package orinnetwork.jpstudy.presentation.search.word;
 
-import com.azure.core.annotation.Get;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -27,7 +26,7 @@ public class WordSearchController {
             @RequestParam(required = false) String keyword,
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @PageableDefault(size = 20) Pageable pageable
-            ) {
+    ) {
         String lang = customUserDetails.getLanguage();
 
         CustomPageResponse<WordSearchResponse> results = wordSearchService.searchWords(keyword, lang, pageable);

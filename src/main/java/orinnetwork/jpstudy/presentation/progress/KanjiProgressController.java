@@ -24,7 +24,7 @@ public class KanjiProgressController {
     @GetMapping("/session")
     public ResponseEntity<StudySessionResponse> getStudySession(
             @AuthenticationPrincipal CustomUserDetails userDetails
-            ) {
+    ) {
         Long memberId = userDetails.getMemberId();
         StudySessionResponse session = kanjiProgressService.getStudySession(memberId);
 
