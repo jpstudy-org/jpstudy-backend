@@ -59,6 +59,12 @@ public abstract class Member extends BaseEntity {
     @Column(nullable = false)
     private Role role;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private MemberStatus status = MemberStatus.ACTIVE;
+
+    private LocalDateTime banExpiresAt;
+
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
@@ -66,6 +72,30 @@ public abstract class Member extends BaseEntity {
         this.email = email;
         this.username = username;
         this.role = role;
+    }
+
+    public void ban(LocalDateTime expiresAt) {
+        this.banExpiresAt = expiresAt;
+        if (expiresAt == null) {
+            this.status = MemberStatus.BANNED;
+        } else {
+            this.status = MemberStatus.SUSPENDED;
+        }
+    }
+
+    public void unban() {
+        this.status = MemberStatus.ACTIVE;
+        this.banExpiresAt = null;
+    }
+
+    public boolean isAccountNonLocked() {
+        if (this.status == MemberStatus.BANNED) {
+            return false;
+        }
+        if (this.status == MemberStatus.SUSPENDED) {
+            return LocalDateTime.now().isAfter(this.banExpiresAt);
+        }
+        return true;
     }
 
     public void updateProfile(String username) {

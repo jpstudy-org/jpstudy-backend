@@ -4,4 +4,5 @@ public enum NotificationType {
     COMMENT,
     MENTION,
     SIGNUP,
+    INQUIRY
 }

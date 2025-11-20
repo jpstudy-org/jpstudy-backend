@@ -4,7 +4,9 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import orinnetwork.jpstudy.application.image.ImageService;
 import orinnetwork.jpstudy.application.inquiry.dto.AttachmentRequest;
+import orinnetwork.jpstudy.application.inquiry.dto.AttachmentResponse;
 import orinnetwork.jpstudy.application.inquiry.dto.CreateInquiryRequest;
 import orinnetwork.jpstudy.application.inquiry.dto.InquiryResponse;
 import orinnetwork.jpstudy.domain.inquiry.Inquiry;
@@ -18,6 +20,7 @@ import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
 public class InquiryService {
 
     private final InquiryRepository inquiryRepository;
+    private final ImageService imageService;
 
     @Transactional
     public Long createInquiry(CreateInquiryRequest request, Long memberId) {
@@ -55,7 +58,14 @@ public class InquiryService {
             throw new CustomException(ErrorCode.INQUIRY_NOT_OWNER);
         }
 
-        return InquiryResponse.from(inquiry);
+        List<AttachmentResponse> attachmentResponses = inquiry.getAttachments().stream()
+                .map(attachment -> {
+                    String presignedUrl = imageService.getStartPresignedUrl(attachment.getStorageKey());
+                    return AttachmentResponse.of(attachment, presignedUrl);
+                })
+                .toList();
+
+        return InquiryResponse.of(inquiry, attachmentResponses);
     }
 
 }

@@ -49,4 +49,8 @@ public class ImageService {
     private String createUniqueFileName(String fileName) {
         return UUID.randomUUID() + "-" + fileName;
     }
+
+    public String getStartPresignedUrl(String fileName) {
+        return storagePort.generateReadPresignedUrl(fileName);
+    }
 }

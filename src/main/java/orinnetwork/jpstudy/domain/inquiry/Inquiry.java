@@ -38,6 +38,11 @@ public class Inquiry {
 
     private LocalDateTime createdAt;
 
+    @Lob
+    private String answerContent;
+
+    private LocalDateTime answeredAt;
+
     @OneToMany(mappedBy = "inquiry", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<InquiryAttachment> attachments = new ArrayList<>();
 
@@ -69,7 +74,9 @@ public class Inquiry {
         attachment.setInquiry(this);
     }
 
-    public void markAsAnswered() {
+    public void answer(String answerContent) {
+        this.answerContent = answerContent;
+        this.answeredAt = LocalDateTime.now();
         this.status = InquiryStatus.ANSWERED;
     }
 }

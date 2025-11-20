@@ -6,14 +6,16 @@ public record AttachmentResponse(
         Long id,
         String originalFileName,
         long fileSize,
-        String storageKey
+        String storageKey,
+        String presignedUrl
 ) {
-    public static AttachmentResponse from(InquiryAttachment entity) {
+    public static AttachmentResponse of(InquiryAttachment entity, String presignedUrl) {
         return new AttachmentResponse(
                 entity.getId(),
                 entity.getOriginalFileName(),
                 entity.getFileSize(),
-                entity.getStorageKey()
+                entity.getStorageKey(),
+                presignedUrl
         );
     }
 }

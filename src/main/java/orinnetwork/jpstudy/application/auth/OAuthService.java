@@ -1,6 +1,8 @@
 package orinnetwork.jpstudy.application.auth;
 
 import jakarta.transaction.Transactional;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +27,7 @@ import orinnetwork.jpstudy.application.auth.dto.TokenResponse;
 import orinnetwork.jpstudy.domain.log.LoginHistory;
 import orinnetwork.jpstudy.domain.log.LoginHistoryRepository;
 import orinnetwork.jpstudy.domain.member.MemberRepository;
+import orinnetwork.jpstudy.domain.member.MemberStatus;
 import orinnetwork.jpstudy.domain.member.OauthMember;
 import orinnetwork.jpstudy.domain.member.Role;
 import orinnetwork.jpstudy.infrastructure.exception.CustomException;
@@ -59,6 +62,20 @@ public class OAuthService {
 
         if (member.getDeletedAt() != null) {
             throw new CustomException(ErrorCode.ACCOUNT_DISABLED);
+        }
+
+        if (!member.isAccountNonLocked()) {
+            long remainMinutes = 0;
+            if (member.getStatus() == MemberStatus.SUSPENDED && member.getBanExpiresAt() != null) {
+                remainMinutes = Duration.between(LocalDateTime.now(), member.getBanExpiresAt()).toMinutes();
+                remainMinutes = Math.max(1, remainMinutes + 1);
+            }
+            else {
+                // 영구 정지인 경우 (메시지를 별도로 분리하거나, 매우 긴 시간으로 처리)
+                remainMinutes = 999999;
+            }
+
+            throw new CustomException(ErrorCode.ACCOUNT_LOCKED, remainMinutes);
         }
 
         LoginHistory loginHistory = LoginHistory.builder()
