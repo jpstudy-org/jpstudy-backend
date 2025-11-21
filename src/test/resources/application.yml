@@ -14,7 +14,7 @@ spring:
           google:
             client-id: 'test-client-id'
             client-secret: 'test-client-secret'
-            redirect-uri: 'http://test.com/login/oauth2/code/google'
+            redirect-uri: 'https://jpstudy.org/login/oauth2/code/google'
             scope:
               - profile
               - email

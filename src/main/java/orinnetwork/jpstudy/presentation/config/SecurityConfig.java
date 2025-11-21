@@ -91,7 +91,9 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/api/admin/login",
                                 "/api/admin/reissue",
-                                "/"
+                                "/",
+
+                                "/actuator/**"
                         ).permitAll()
 
                         .requestMatchers(HttpMethod.GET,
