@@ -13,6 +13,7 @@ import orinnetwork.jpstudy.application.exam.dto.SubmitTestRequest;
 import orinnetwork.jpstudy.application.exam.dto.TestResultResponse;
 import orinnetwork.jpstudy.application.exam.dto.UserAnswer;
 import orinnetwork.jpstudy.domain.exam.Exam;
+import orinnetwork.jpstudy.domain.exam.ExamQuestion;
 import orinnetwork.jpstudy.domain.exam.ExamQuestionRepository;
 import orinnetwork.jpstudy.domain.exam.ExamRepository;
 import orinnetwork.jpstudy.domain.exam.MemberAnswer;
@@ -42,6 +43,42 @@ public class TestAttemptService {
     private final MemberAnswerRepository memberAnswerRepository;
     private final ExamQuestionRepository examQuestionRepository;
 
+    @Transactional
+    public void saveAnswer(Long attemptId, Long memberId, Long questionId, Long choiceId) {
+        TestAttempt attempt = testAttemptRepository.findById(attemptId)
+                .orElseThrow(() -> new CustomException(ErrorCode.TEST_ATTEMPT_NOT_FOUND));
+
+        if (!attempt.getMember().getId().equals(memberId)) {
+            throw new CustomException(ErrorCode.TEST_ATTEMPT_NOT_FOUND);
+        }
+
+        Question question = questionRepository.findById(questionId)
+                .orElseThrow(() -> new CustomException(ErrorCode.QUESTION_NOT_FOUND)); // ErrorCode 추가 필요
+
+        Choice choice = choiceRepository.findById(choiceId)
+                .orElseThrow(() -> new IllegalArgumentException("Choice not found"));
+
+        // ★ 핵심: 이미 저장된 답이 있으면 수정, 없으면 생성 (Upsert)
+        MemberAnswer memberAnswer = memberAnswerRepository
+                .findByTestAttemptAndQuestion(attempt, question)
+                .orElse(null);
+
+        if (memberAnswer != null) {
+            // 이미 있으면 -> 업데이트 (Dirty Checking)
+            // (MemberAnswer 엔티티에 updateChoice 메서드 추가 필요)
+            memberAnswer.changeChoice(choice);
+        } else {
+            // 없으면 -> 새로 생성
+            memberAnswer = MemberAnswer.builder()
+                    .testAttempt(attempt)
+                    .question(question)
+                    .selectedChoice(choice)
+                    .isCorrect(false) // 임시 저장이므로 정답 여부는 나중에 채점
+                    .build();
+            memberAnswerRepository.save(memberAnswer);
+        }
+    }
+
     public StartTestResponse startTest(Long examId, Long memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
@@ -56,7 +93,9 @@ public class TestAttemptService {
 
         testAttemptRepository.save(attempt);
 
-        return StartTestResponse.of(attempt);
+        List<ExamQuestion> questions = examQuestionRepository.findByExamIdOrderByQuestionNumberAsc(examId);
+
+        return StartTestResponse.of(attempt, questions, List.of());
     }
 
     public TestResultResponse submitTest(Long attemptId, Long memberId, SubmitTestRequest request) {

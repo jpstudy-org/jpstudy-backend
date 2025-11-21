@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import orinnetwork.jpstudy.application.exam.TestAttemptService;
-import orinnetwork.jpstudy.application.exam.dto.StartTestResponse;
+import orinnetwork.jpstudy.application.exam.dto.SaveAnswerRequest;
 import orinnetwork.jpstudy.application.exam.dto.SubmitTestRequest;
 import orinnetwork.jpstudy.application.exam.dto.TestResultResponse;
 import orinnetwork.jpstudy.infrastructure.security.CustomUserDetails;
@@ -21,15 +21,14 @@ public class TestAttemptController {
 
     private final TestAttemptService testAttemptService;
 
-    @PostMapping("/start/{examId}")
-    public ResponseEntity<StartTestResponse> startTest(
-            @PathVariable Long examId,
+    @PostMapping("/{attemptId}/answer")
+    public ResponseEntity<Void> saveAnswer(
+            @PathVariable Long attemptId,
+            @RequestBody SaveAnswerRequest request, // { questionId, choiceId }
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-
-        Long memberId = userDetails.getMemberId();
-        StartTestResponse response = testAttemptService.startTest(examId, memberId);
-        return ResponseEntity.ok(response);
+        testAttemptService.saveAnswer(attemptId, userDetails.getMemberId(), request.questionId(), request.choiceId());
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/submit/{attemptId}")

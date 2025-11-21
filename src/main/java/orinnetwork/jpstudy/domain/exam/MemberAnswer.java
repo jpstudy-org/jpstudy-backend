@@ -44,4 +44,8 @@ public class MemberAnswer {
         this.selectedChoice = selectedChoice;
         this.isCorrect = isCorrect;
     }
+
+    public void changeChoice(Choice newChoice) {
+        this.selectedChoice = newChoice;
+    }
 }

@@ -56,6 +56,7 @@ public enum ErrorCode {
     QUESTION_NOT_FOUND(HttpStatus.NOT_FOUND, "QST-003", "error.question.not_found"),
     SECTION_NOT_FOUND(HttpStatus.NOT_FOUND, "QST-004", "error.question.section_not_found"),
     LEVEL_ALREADY_EXISTS(HttpStatus.CONFLICT, "QST-005", "error.question.level_exists"),
+    TEST_NOT_OWNER(HttpStatus.FORBIDDEN, "EXM-005", "error.exam.not_owner"),
 
     // [Image/File]
     FILE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "IMG-001", "error.image.size_exceeded"),
