@@ -35,7 +35,6 @@ import orinnetwork.jpstudy.infrastructure.security.CustomUserDetails;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class AuthService {
 
     private final MemberRepository memberRepository;
@@ -58,6 +57,7 @@ public class AuthService {
     private static final long LOCKOUT_DURATION_MINUTES = 10;
     private final LoginHistoryRepository loginHistoryRepository;
 
+    @Transactional
     public TokenResponse signUp(SignUpRequest requestDto, String ipAddress, String userAgent) {
 
         usernameValidator.validate(requestDto.getUsername());
@@ -241,6 +241,8 @@ public class AuthService {
         emailService.sendPasswordResetLink(member.getEmail(), resetToken);
     }
 
+
+    @Transactional
     public void confirmPasswordReset(PasswordResetConfirm request) {
         String redisKey = RESET_TOKEN_PREFIX + request.getToken();
 
