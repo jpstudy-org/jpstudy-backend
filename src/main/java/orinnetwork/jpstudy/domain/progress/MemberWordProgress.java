@@ -14,7 +14,6 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import orinnetwork.jpstudy.domain.member.Member;
@@ -56,19 +55,34 @@ public class MemberWordProgress {
     @Column
     private LocalDateTime nextReviewAt;
 
-    @Builder
-    public MemberWordProgress(Member member, Word word, MasteryLevel masteryLevel, LocalDateTime lastReviewedAt,
-                              LocalDateTime nextReviewAt) {
+    @Column(nullable = false)
+    private Double stability = 0.0;
+
+    @Column(nullable = false)
+    private Double difficulty = 0.0;
+
+    public MemberWordProgress(Member member, Word word, LocalDateTime now) {
         this.member = member;
         this.word = word;
-        this.masteryLevel = masteryLevel;
-        this.lastReviewedAt = lastReviewedAt;
-        this.nextReviewAt = nextReviewAt;
+        this.lastReviewedAt = now;
+        this.nextReviewAt = now;
+        this.masteryLevel = MasteryLevel.NEW;
+        this.stability = 0.0;
+        this.difficulty = 0.0;
     }
 
-    public void update(MasteryLevel newMasteryLevel, LocalDateTime lastReviewedAt, LocalDateTime nextReviewAt) {
-        this.masteryLevel = newMasteryLevel;
-        this.lastReviewedAt = lastReviewedAt;
+    public void updateFsrs(Double stability, Double difficulty, LocalDateTime reviewedAt, LocalDateTime nextReviewAt) {
+        this.stability = stability;
+        this.difficulty = difficulty;
+        this.lastReviewedAt = reviewedAt;
         this.nextReviewAt = nextReviewAt;
+        updateMasteryLevelByStability();
+    }
+
+    private void updateMasteryLevelByStability() {
+        if (this.stability < 1.0) this.masteryLevel = MasteryLevel.NEW;
+        else if (this.stability < 21.0) this.masteryLevel = MasteryLevel.APPRENTICE;
+        else if (this.stability < 90.0) this.masteryLevel = MasteryLevel.GURU;
+        else this.masteryLevel = MasteryLevel.MASTERED;
     }
 }

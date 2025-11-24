@@ -1,18 +1,18 @@
 package orinnetwork.jpstudy.application.progress.word;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import orinnetwork.jpstudy.application.progress.word.dto.ReviewDifficulty;
+import orinnetwork.jpstudy.application.progress.common.component.FsrsScheduler;
+import orinnetwork.jpstudy.application.progress.common.dto.ReviewDifficulty;
+import orinnetwork.jpstudy.application.progress.common.dto.ReviewResult;
 import orinnetwork.jpstudy.application.progress.word.dto.StudySessionResponse;
 import orinnetwork.jpstudy.application.progress.word.dto.WordCard;
 import orinnetwork.jpstudy.domain.member.Member;
 import orinnetwork.jpstudy.domain.member.MemberRepository;
-import orinnetwork.jpstudy.domain.progress.MasteryLevel;
 import orinnetwork.jpstudy.domain.progress.MemberWordProgress;
 import orinnetwork.jpstudy.domain.progress.MemberWordProgressRepository;
 import orinnetwork.jpstudy.domain.word.Word;
@@ -28,85 +28,64 @@ public class WordProgressService {
     private final MemberRepository memberRepository;
     private final WordRepository wordRepository;
     private final MemberWordProgressRepository progressRepository;
+    private final FsrsScheduler fsrsScheduler; // 공통 FSRS 스케줄러
 
     private static final int NEW_CARDS_PER_SESSION = 30;
-    private static final double WORD_LEVEL_MODIFIER_BASE = 100.0;
 
     public StudySessionResponse getStudySession(Long memberId) {
-        LocalDateTime now = LocalDateTime.now();
         Member member = memberRepository.getReferenceById(memberId);
+        String lang = member.getLanguagePreference();
 
-        final String lang = member.getLanguagePreference();
-
-        List<MemberWordProgress> reviewProgressList = progressRepository
-                .findDueForReview(member, now);
-
-        List<WordCard> reviewCards = reviewProgressList.stream()
-                .map(progress -> new WordCard(progress.getWord(), lang))
-                .toList();
-
-        List<Word> newWordList = wordRepository
-                .findNewWordForMember(memberId, PageRequest.of(0, NEW_CARDS_PER_SESSION));
-
-        List<WordCard> newCards = newWordList.stream()
-                .map(word -> new WordCard(word, lang))
-                .toList();
+        List<WordCard> reviewCards = getReviewCards(member, lang);
+        List<WordCard> newCards = getNewCards(memberId, lang);
 
         return new StudySessionResponse(reviewCards, newCards);
     }
 
     @Transactional
     public void updateProgress(Long memberId, Long wordId, ReviewDifficulty difficulty) {
-        LocalDateTime now = LocalDateTime.now();
+        MemberWordProgress progress = getOrCreateProgress(memberId, wordId);
 
+        // FSRS 알고리즘 실행 (Word 전용 오버로딩 메서드 호출)
+        ReviewResult result = fsrsScheduler.calculateNextReview(
+                progress,
+                progress.getWord(),
+                difficulty
+        );
+
+        // 결과 저장 (레벨 자동 갱신 포함)
+        progress.updateFsrs(
+                result.newStability(),
+                result.newDifficulty(),
+                result.reviewedAt(),
+                result.nextReviewAt()
+        );
+    }
+
+    // --- Private Helpers ---
+
+    private List<WordCard> getReviewCards(Member member, String lang) {
+        return progressRepository.findDueForReview(member, LocalDateTime.now())
+                .stream()
+                .map(p -> new WordCard(p.getWord(), lang))
+                .toList();
+    }
+
+    private List<WordCard> getNewCards(Long memberId, String lang) {
+        return wordRepository.findNewWordForMember(memberId, PageRequest.of(0, NEW_CARDS_PER_SESSION))
+                .stream()
+                .map(w -> new WordCard(w, lang))
+                .toList();
+    }
+
+    private MemberWordProgress getOrCreateProgress(Long memberId, Long wordId) {
         Member member = memberRepository.getReferenceById(memberId);
         Word word = wordRepository.findById(wordId)
                 .orElseThrow(() -> new CustomException(ErrorCode.WORD_NOT_FOUND));
 
-        MemberWordProgress progress = progressRepository
-                .findByMemberAndWord(member, word)
-                .orElse(new MemberWordProgress(member, word, MasteryLevel.NEW, null, now));
-
-        MasteryLevel currentMasteryLevel = progress.getMasteryLevel();
-        MasteryLevel nextMasteryLevel = calculateNextMasteryLevel(currentMasteryLevel, difficulty);
-
-        // fail
-        if (difficulty == ReviewDifficulty.AGAIN) {
-            Duration immediateReviewInterval = MasteryLevel.NEW.getBaseInterval();
-            progress.update(MasteryLevel.NEW, now, now.plus(immediateReviewInterval));
-            progressRepository.save(progress);
-            return;
-        }
-
-        Duration baseInterval = nextMasteryLevel.getBaseInterval();
-
-        double difficultyModifier = Math.max(0.1, word.getLevel() / WORD_LEVEL_MODIFIER_BASE);
-
-        long baseMinutes = baseInterval.toMinutes();
-        long finalMinutes = (long) (baseMinutes * difficultyModifier);
-
-        LocalDateTime nextReviewAt = now.plusMinutes(finalMinutes);
-
-        progress.update(nextMasteryLevel, now, nextReviewAt);
-        progressRepository.save(progress);
-    }
-
-    private MasteryLevel calculateNextMasteryLevel(MasteryLevel current, ReviewDifficulty difficulty) {
-        switch (difficulty) {
-            case AGAIN -> {
-                return MasteryLevel.NEW;
-            }
-            case HARD -> {
-                return current.getPreviousLevel();
-            }
-            case GOOD -> {
-                return current.getNextLevel();
-            }
-            case EASY -> {
-                MasteryLevel next = current.getNextLevel();
-                return (next == MasteryLevel.MASTERED) ? MasteryLevel.MASTERED : next.getNextLevel();
-            }
-        }
-        return current;
+        return progressRepository.findByMemberAndWord(member, word)
+                .orElseGet(() -> progressRepository.save(
+                        new MemberWordProgress(member, word, LocalDateTime.now())
+                ));
     }
 }
