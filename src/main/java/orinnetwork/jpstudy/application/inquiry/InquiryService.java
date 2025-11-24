@@ -22,6 +22,9 @@ public class InquiryService {
     private final InquiryRepository inquiryRepository;
     private final ImageService imageService;
 
+    /**
+     * 문의하기
+     */
     @Transactional
     public Long createInquiry(CreateInquiryRequest request, Long memberId) {
         List<InquiryAttachment> attachments = request.attachments().stream()
@@ -40,6 +43,22 @@ public class InquiryService {
         return savedInquiry.getId();
     }
 
+    @Transactional(readOnly = true)
+    public InquiryResponse getInquiryDetails(Long inquiryId, Long memberId) {
+        Inquiry inquiry = inquiryRepository.findById(inquiryId)
+                .orElseThrow(() -> new CustomException(ErrorCode.INQUIRY_NOT_FOUND));
+
+        validateOwnership(inquiry, memberId);
+
+        List<AttachmentResponse> attachmentResponses = inquiry.getAttachments().stream()
+                .map(this::toAttachmentResponse)
+                .toList();
+
+        return InquiryResponse.of(inquiry, attachmentResponses);
+    }
+
+    // --- Private ---
+
     private InquiryAttachment mapToAttachmentEntity(AttachmentRequest dto) {
         return InquiryAttachment.create(
                 dto.storageKey(),
@@ -49,23 +68,14 @@ public class InquiryService {
         );
     }
 
-    @Transactional(readOnly = true)
-    public InquiryResponse getInquiryDetails(Long inquiryId, Long memberId) {
-        Inquiry inquiry = inquiryRepository.findById(inquiryId)
-                .orElseThrow(() -> new CustomException(ErrorCode.INQUIRY_NOT_FOUND));
-
+    private void validateOwnership(Inquiry inquiry, Long memberId) {
         if (!inquiry.getMemberId().equals(memberId)) {
             throw new CustomException(ErrorCode.INQUIRY_NOT_OWNER);
         }
-
-        List<AttachmentResponse> attachmentResponses = inquiry.getAttachments().stream()
-                .map(attachment -> {
-                    String presignedUrl = imageService.getStartPresignedUrl(attachment.getStorageKey());
-                    return AttachmentResponse.of(attachment, presignedUrl);
-                })
-                .toList();
-
-        return InquiryResponse.of(inquiry, attachmentResponses);
     }
 
+    private AttachmentResponse toAttachmentResponse(InquiryAttachment attachment) {
+        String presignedUrl = imageService.getStartPresignedUrl(attachment.getStorageKey());
+        return AttachmentResponse.of(attachment, presignedUrl);
+    }
 }
