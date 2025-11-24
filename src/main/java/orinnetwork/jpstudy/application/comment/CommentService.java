@@ -30,25 +30,16 @@ public class CommentService {
 
     @Transactional
     public CommentResponse createComment(Long postId, CommentRequest request, Long memberId, String ipAddress) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
+        Post post = getActivePost(postId);
+        Member member = getMember(memberId);
 
-        if (post.getPostStatus() != PostStatus.ACTIVE) {
-            throw new CustomException(ErrorCode.POST_NOT_ACTIVE);
-        }
-
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-
-        Comment newComment = Comment.builder()
+        Comment savedComment = commentRepository.save(Comment.builder()
                 .content(request.getContent())
                 .post(post)
                 .member(member)
                 .ipAddress(ipAddress)
                 .commentStatus(CommentStatus.ACTIVE)
-                .build();
-
-        Comment savedComment = commentRepository.save(newComment);
+                .build());
 
         post.increaseCommentCount();
 
@@ -56,12 +47,7 @@ public class CommentService {
     }
 
     public CustomPageResponse<CommentResponse> getComments(Long postId, Pageable pageable) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
-
-        if (post.getPostStatus() != PostStatus.ACTIVE) {
-            throw new CustomException(ErrorCode.POST_NOT_ACTIVE);
-        }
+        validateActivePost(postId); // 게시글 상태 검증 재사용
 
         Page<Comment> commentPage = commentRepository.findByPost_IdAndCommentStatus(
                 postId,
@@ -69,9 +55,7 @@ public class CommentService {
                 pageable
         );
 
-        Page<CommentResponse> responses = commentPage.map(CommentResponse::from);
-
-        return new CustomPageResponse<>(responses);
+        return new CustomPageResponse<>(commentPage.map(CommentResponse::from));
     }
 
     @Transactional
@@ -79,13 +63,36 @@ public class CommentService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CustomException(ErrorCode.COMMENT_NOT_FOUND));
 
+        validateCommentOwner(comment, memberId);
+
+        comment.delete();
+        comment.getPost().decreaseCommentCount();
+    }
+
+    // --- Private ---
+
+    private Post getActivePost(Long postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
+
+        if (post.getPostStatus() != PostStatus.ACTIVE) {
+            throw new CustomException(ErrorCode.POST_NOT_ACTIVE);
+        }
+        return post;
+    }
+
+    private void validateActivePost(Long postId) {
+        getActivePost(postId);
+    }
+
+    private Member getMember(Long memberId) {
+        return memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+    }
+
+    private void validateCommentOwner(Comment comment, Long memberId) {
         if (!comment.getMember().getId().equals(memberId)) {
             throw new CustomException(ErrorCode.COMMENT_NOT_OWNER);
         }
-
-        comment.delete();
-
-        Post post = comment.getPost();
-        post.decreaseCommentCount();
     }
 }
