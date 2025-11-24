@@ -1,32 +1,23 @@
 package orinnetwork.jpstudy.application.exam;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import orinnetwork.jpstudy.application.exam.component.TestAnswerManager;
+import orinnetwork.jpstudy.application.exam.component.TestGrader;
+import orinnetwork.jpstudy.application.exam.dto.GradeResult;
 import orinnetwork.jpstudy.application.exam.dto.StartTestResponse;
 import orinnetwork.jpstudy.application.exam.dto.SubmitTestRequest;
 import orinnetwork.jpstudy.application.exam.dto.TestResultResponse;
-import orinnetwork.jpstudy.application.exam.dto.UserAnswer;
 import orinnetwork.jpstudy.domain.exam.Exam;
-import orinnetwork.jpstudy.domain.exam.ExamQuestion;
 import orinnetwork.jpstudy.domain.exam.ExamQuestionRepository;
 import orinnetwork.jpstudy.domain.exam.ExamRepository;
-import orinnetwork.jpstudy.domain.exam.MemberAnswer;
 import orinnetwork.jpstudy.domain.exam.MemberAnswerRepository;
 import orinnetwork.jpstudy.domain.exam.TestAttempt;
 import orinnetwork.jpstudy.domain.exam.TestAttempt.AttemptStatus;
 import orinnetwork.jpstudy.domain.exam.TestAttemptRepository;
 import orinnetwork.jpstudy.domain.member.Member;
 import orinnetwork.jpstudy.domain.member.MemberRepository;
-import orinnetwork.jpstudy.domain.questionbank.Choice;
-import orinnetwork.jpstudy.domain.questionbank.ChoiceRepository;
-import orinnetwork.jpstudy.domain.questionbank.Question;
-import orinnetwork.jpstudy.domain.questionbank.QuestionRepository;
 import orinnetwork.jpstudy.infrastructure.exception.CustomException;
 import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
 
@@ -38,45 +29,16 @@ public class TestAttemptService {
     private final MemberRepository memberRepository;
     private final ExamRepository examRepository;
     private final TestAttemptRepository testAttemptRepository;
-    private final QuestionRepository questionRepository;
-    private final ChoiceRepository choiceRepository;
     private final MemberAnswerRepository memberAnswerRepository;
     private final ExamQuestionRepository examQuestionRepository;
 
+    private final TestAnswerManager testAnswerManager;
+    private final TestGrader testGrader;
+
     @Transactional
     public void saveAnswer(Long attemptId, Long memberId, Long questionId, Long choiceId) {
-        TestAttempt attempt = testAttemptRepository.findById(attemptId)
-                .orElseThrow(() -> new CustomException(ErrorCode.TEST_ATTEMPT_NOT_FOUND));
-
-        if (!attempt.getMember().getId().equals(memberId)) {
-            throw new CustomException(ErrorCode.TEST_ATTEMPT_NOT_FOUND);
-        }
-
-        Question question = questionRepository.findById(questionId)
-                .orElseThrow(() -> new CustomException(ErrorCode.QUESTION_NOT_FOUND)); // ErrorCode 추가 필요
-
-        Choice choice = choiceRepository.findById(choiceId)
-                .orElseThrow(() -> new IllegalArgumentException("Choice not found"));
-
-        // ★ 핵심: 이미 저장된 답이 있으면 수정, 없으면 생성 (Upsert)
-        MemberAnswer memberAnswer = memberAnswerRepository
-                .findByTestAttemptAndQuestion(attempt, question)
-                .orElse(null);
-
-        if (memberAnswer != null) {
-            // 이미 있으면 -> 업데이트 (Dirty Checking)
-            // (MemberAnswer 엔티티에 updateChoice 메서드 추가 필요)
-            memberAnswer.changeChoice(choice);
-        } else {
-            // 없으면 -> 새로 생성
-            memberAnswer = MemberAnswer.builder()
-                    .testAttempt(attempt)
-                    .question(question)
-                    .selectedChoice(choice)
-                    .isCorrect(false) // 임시 저장이므로 정답 여부는 나중에 채점
-                    .build();
-            memberAnswerRepository.save(memberAnswer);
-        }
+        TestAttempt attempt = getAttemptWithOwnership(attemptId, memberId);
+        testAnswerManager.upsertAnswer(attempt, questionId, choiceId);
     }
 
     public StartTestResponse startTest(Long examId, Long memberId) {
@@ -86,74 +48,46 @@ public class TestAttemptService {
         Exam exam = examRepository.findById(examId)
                 .orElseThrow(() -> new CustomException(ErrorCode.EXAM_NOT_FOUND));
 
-        TestAttempt attempt = TestAttempt.builder()
+        TestAttempt attempt = testAttemptRepository.save(TestAttempt.builder()
                 .member(member)
                 .exam(exam)
-                .build();
+                .build());
 
-        testAttemptRepository.save(attempt);
-
-        List<ExamQuestion> questions = examQuestionRepository.findByExamIdOrderByQuestionNumberAsc(examId);
-
-        return StartTestResponse.of(attempt, questions, List.of());
+        return StartTestResponse.of(attempt,
+                examQuestionRepository.findByExamIdOrderByQuestionNumberAsc(examId),
+                java.util.List.of());
     }
 
     public TestResultResponse submitTest(Long attemptId, Long memberId, SubmitTestRequest request) {
+        TestAttempt attempt = getAttemptWithOwnership(attemptId, memberId);
+        validateNotSubmitted(attempt);
+
+        GradeResult gradeResult = testGrader.grade(attempt, request.answers());
+
+        memberAnswerRepository.saveAll(gradeResult.answers());
+        attempt.complete(gradeResult.score());
+
+        return createResultResponse(attempt);
+    }
+
+    private TestAttempt getAttemptWithOwnership(Long attemptId, Long memberId) {
         TestAttempt attempt = testAttemptRepository.findById(attemptId)
                 .orElseThrow(() -> new CustomException(ErrorCode.TEST_ATTEMPT_NOT_FOUND));
 
         if (!attempt.getMember().getId().equals(memberId)) {
             throw new CustomException(ErrorCode.EXAM_NOT_OWNER);
         }
+        return attempt;
+    }
 
+    private void validateNotSubmitted(TestAttempt attempt) {
         if (attempt.getStatus() == AttemptStatus.COMPLETED) {
             throw new CustomException(ErrorCode.TEST_ALREADY_SUBMITTED);
         }
+    }
 
-        List<UserAnswer> userAnswers = request.answers();
-        List<Long> questionIds = userAnswers.stream().map(UserAnswer::questionId).toList();
-        List<Long> choiceIds = userAnswers.stream().map(UserAnswer::selectedChoiceId).toList();
-
-        Map<Long, Question> questionMap = questionRepository.findAllById(questionIds).stream()
-                .collect(Collectors.toMap(Question::getId, Function.identity()));
-
-        Map<Long, Choice> choiceMap = choiceRepository.findAllById(choiceIds).stream()
-                .collect(Collectors.toMap(Choice::getId, Function.identity()));
-
-        int correctCount = 0;
-        List<MemberAnswer> memberAnswers = new ArrayList<>();
-
-        for (UserAnswer userAnswer : userAnswers) {
-            Question question = questionMap.get(userAnswer.questionId());
-            Choice selectedChoice = choiceMap.get(userAnswer.selectedChoiceId());
-
-            boolean isCorrect = false;
-            if (question != null && selectedChoice != null) {
-                if (selectedChoice.getQuestion().getId().equals(question.getId())) {
-                    isCorrect = selectedChoice.isCorrect();
-                }
-            }
-
-            if (isCorrect) {
-                correctCount++;
-            }
-
-            MemberAnswer memberAnswer = MemberAnswer.builder()
-                    .testAttempt(attempt)
-                    .question(question)
-                    .selectedChoice(selectedChoice)
-                    .isCorrect(isCorrect)
-                    .build();
-
-            memberAnswers.add(memberAnswer);
-        }
-
-        memberAnswerRepository.saveAll(memberAnswers);
-
-        attempt.complete(correctCount);
-
+    private TestResultResponse createResultResponse(TestAttempt attempt) {
         int totalQuestions = examQuestionRepository.countByExamId(attempt.getExam().getId());
-
         return new TestResultResponse(
                 attempt.getId(),
                 attempt.getExam().getId(),
@@ -162,7 +96,7 @@ public class TestAttemptService {
                 totalQuestions,
                 attempt.getStartTime(),
                 attempt.getEndTime(),
-                List.of()
+                java.util.List.of()
         );
     }
 }

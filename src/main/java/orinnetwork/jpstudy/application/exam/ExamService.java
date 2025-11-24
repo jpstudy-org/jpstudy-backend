@@ -1,25 +1,22 @@
 package orinnetwork.jpstudy.application.exam;
 
-import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import orinnetwork.jpstudy.application.exam.component.ExamGenerator;
 import orinnetwork.jpstudy.application.exam.dto.ExamTakingResponse;
 import orinnetwork.jpstudy.application.exam.dto.StartTestResponse;
-import orinnetwork.jpstudy.domain.exam.BlueprintDetail;
 import orinnetwork.jpstudy.domain.exam.Exam;
-import orinnetwork.jpstudy.domain.exam.ExamBlueprint;
 import orinnetwork.jpstudy.domain.exam.ExamBlueprintRepository;
 import orinnetwork.jpstudy.domain.exam.ExamQuestion;
 import orinnetwork.jpstudy.domain.exam.ExamQuestionRepository;
 import orinnetwork.jpstudy.domain.exam.ExamRepository;
 import orinnetwork.jpstudy.domain.exam.MemberAnswer;
 import orinnetwork.jpstudy.domain.exam.MemberAnswerRepository;
+import orinnetwork.jpstudy.domain.exam.TestAttempt;
 import orinnetwork.jpstudy.domain.exam.TestAttempt.AttemptStatus;
 import orinnetwork.jpstudy.domain.exam.TestAttemptRepository;
-import orinnetwork.jpstudy.domain.questionbank.Question;
 import orinnetwork.jpstudy.domain.questionbank.QuestionRepository;
 import orinnetwork.jpstudy.infrastructure.exception.CustomException;
 import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
@@ -36,23 +33,24 @@ public class ExamService {
     private final TestAttemptService testAttemptService;
     private final TestAttemptRepository testAttemptRepository;
     private final MemberAnswerRepository memberAnswerRepository;
+    private final ExamGenerator examGenerator;
 
+    /**
+     * 시험중인 경우 시험지 가져오기
+     * TODO: 시간 상 종료되었는데 가져오는 경우가 있어서 종료는 그냥 끝내버리는 로직으로 수정해야 함
+     */
     @Transactional
     public StartTestResponse getOngoingExam(Long memberId) {
         return testAttemptRepository.findFirstByMemberIdAndStatusOrderByStartTimeDesc(
-                memberId,
-                AttemptStatus.IN_PROGRESS
-        )
-                .map(attempt -> {
-                    List<ExamQuestion> questions = examQuestionRepository.findByExamIdOrderByQuestionNumberAsc(attempt.getExam().getId());
-
-                    List<MemberAnswer> savedAnswers = memberAnswerRepository.findByTestAttempt(attempt);
-
-                    return StartTestResponse.of(attempt, questions, savedAnswers);
-                })
+                        memberId, AttemptStatus.IN_PROGRESS)
+                .map(this::loadExamContext)
                 .orElse(null);
     }
 
+    /**
+     * 시험 시작
+     * TODO: 여긴 왜 DTO안쓰고 그냥 값들 가져오고 있지?
+     */
     @Transactional
     public StartTestResponse startExamByBlueprint(Long blueprintId, Long memberId, String examTitle) {
         // 1. 시험지 생성 (아래 메서드 호출)
@@ -64,43 +62,8 @@ public class ExamService {
 
     @Transactional
     public ExamTakingResponse createExamFromBlueprint(Long blueprintId, String title) {
-        ExamBlueprint blueprint = examBlueprintRepository.findById(blueprintId)
-                .orElseThrow(() -> new CustomException(ErrorCode.EXAM_NOT_FOUND));
-
-        Exam exam = Exam.builder()
-                .level(blueprint.getLevel())
-                .title(title)
-                .totalTimeMinutes(blueprint.getTotalTimeMinutes())
-                .build();
-
-        examRepository.save(exam);
-
-        List<ExamQuestion> examQuestions = new ArrayList<>();
-        int currentQuestionNumber = 1;
-
-        for (BlueprintDetail detail : blueprint.getDetails()) {
-
-            List<Question> questions = questionRepository.findRandomQuestionsByLevelAndCategory(
-                    blueprint.getLevel().getId(),
-                    detail.getCategory().getName(),
-                    PageRequest.of(0, detail.getQuestionCount())
-            );
-
-            if (questions.size() < detail.getQuestionCount()) {
-                throw new CustomException(ErrorCode.NOT_ENOUGH_QUESTIONS);
-            }
-
-            for (Question q : questions) {
-                ExamQuestion examQuestion = new ExamQuestion(exam, q, currentQuestionNumber++);
-                examQuestions.add(examQuestion);
-            }
-        }
-
-        examQuestionRepository.saveAll(examQuestions);
-
-        return ExamTakingResponse.of(exam, examQuestions);
+        return examGenerator.generate(blueprintId, title);
     }
-
 
     /**
      * 특정 시험지의 상세 정보(문제 목록 포함)를 조회합니다.
@@ -115,5 +78,17 @@ public class ExamService {
         List<ExamQuestion> examQuestions = examQuestionRepository.findByExamIdOrderByQuestionNumberAsc(examId);
 
         return ExamTakingResponse.of(exam, examQuestions);
+    }
+
+
+    // --- Private ---
+
+    private StartTestResponse loadExamContext(TestAttempt attempt) {
+        Long examId = attempt.getExam().getId();
+
+        List<ExamQuestion> questions = examQuestionRepository.findByExamIdOrderByQuestionNumberAsc(examId);
+        List<MemberAnswer> savedAnswers = memberAnswerRepository.findByTestAttempt(attempt);
+
+        return StartTestResponse.of(attempt, questions, savedAnswers);
     }
 }
