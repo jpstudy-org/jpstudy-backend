@@ -1,174 +1,37 @@
 package orinnetwork.jpstudy.application.auth;
 
 import jakarta.transaction.Transactional;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
-import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
-import org.springframework.security.oauth2.client.endpoint.RestClientAuthorizationCodeTokenResponseClient;
-import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
-import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
-import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
-import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
-import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
-import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationExchange;
-import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
-import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponse;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+import orinnetwork.jpstudy.application.auth.component.LoginHistoryRecorder;
+import orinnetwork.jpstudy.application.auth.component.LoginLockManager;
+import orinnetwork.jpstudy.application.auth.component.OAuth2Client;
+import orinnetwork.jpstudy.application.auth.component.OAuthMemberManager;
+import orinnetwork.jpstudy.application.auth.component.TokenManager;
 import orinnetwork.jpstudy.application.auth.dto.OAuthLoginRequest;
 import orinnetwork.jpstudy.application.auth.dto.TokenResponse;
-import orinnetwork.jpstudy.domain.log.LoginHistory;
-import orinnetwork.jpstudy.domain.log.LoginHistoryRepository;
-import orinnetwork.jpstudy.domain.member.MemberRepository;
-import orinnetwork.jpstudy.domain.member.MemberStatus;
 import orinnetwork.jpstudy.domain.member.OauthMember;
-import orinnetwork.jpstudy.domain.member.Role;
-import orinnetwork.jpstudy.infrastructure.exception.CustomException;
-import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
-import orinnetwork.jpstudy.infrastructure.jwt.JwtProvider;
 
 @Service
 @RequiredArgsConstructor
 public class OAuthService {
 
-    private final MemberRepository memberRepository;
-    private final JwtProvider jwtProvider;
-    private final InMemoryClientRegistrationRepository clientRegistrationRepository;
-
-    private final RedisTemplate<String, String> authRedisTemplate;
-    private static final String REFRESH_TOKEN_PREFIX = "RT:";
-    private final LoginHistoryRepository loginHistoryRepository;
+    private final OAuth2Client oAuth2Client;
+    private final OAuthMemberManager oAuthMemberManager;
+    private final TokenManager tokenManager;
+    private final LoginHistoryRecorder loginHistoryRecorder;
+    private final LoginLockManager loginLockManager;
 
     @Transactional
-    public TokenResponse login(OAuthLoginRequest requestDto, String ipAddress, String userAgent) {
-        ClientRegistration provider = clientRegistrationRepository.findByRegistrationId(requestDto.getProvider());
+    public TokenResponse login(OAuthLoginRequest request, String ipAddress, String userAgent) {
+        OAuth2User oAuth2User = oAuth2Client.fetchUser(request.getProvider(), request.getAuthorizationCode());
 
-        if (provider == null) {
-            throw new CustomException(ErrorCode.OAUTH_PROVIDER_NOT_SUPPORTED, requestDto.getProvider());
-        }
+        OauthMember member = oAuthMemberManager.syncMember(request.getProvider(), oAuth2User);
 
-        OAuth2AccessTokenResponse tokenResponse = getToken(provider, requestDto.getAuthorizationCode());
+        loginLockManager.validateMemberStatus(member);
 
-        OAuth2User oAuth2User = getUserInfo(provider, tokenResponse);
-
-        OauthMember member = saveOrUpdate(oAuth2User, requestDto.getProvider());
-
-        if (member.getDeletedAt() != null) {
-            throw new CustomException(ErrorCode.ACCOUNT_DISABLED);
-        }
-
-        if (!member.isAccountNonLocked()) {
-            long remainMinutes = 0;
-            if (member.getStatus() == MemberStatus.SUSPENDED && member.getBanExpiresAt() != null) {
-                remainMinutes = Duration.between(LocalDateTime.now(), member.getBanExpiresAt()).toMinutes();
-                remainMinutes = Math.max(1, remainMinutes + 1);
-            }
-            else {
-                // 영구 정지인 경우 (메시지를 별도로 분리하거나, 매우 긴 시간으로 처리)
-                remainMinutes = 999999;
-            }
-
-            throw new CustomException(ErrorCode.ACCOUNT_LOCKED, remainMinutes);
-        }
-
-        LoginHistory loginHistory = LoginHistory.builder()
-                .memberId(member.getId())
-                .ipAddress(ipAddress)
-                .userAgent(userAgent)
-                .build();
-
-        loginHistoryRepository.save(loginHistory);
-
-        String accessToken = jwtProvider.createAccessToken(member.getId(), member.getRole());
-        String refreshToken = jwtProvider.createRefreshToken(member.getId());
-        String memberId = member.getId().toString();
-
-        String redisKey = REFRESH_TOKEN_PREFIX + memberId;
-        long refreshTokenValidityMs = jwtProvider.getRefreshTokenValidityInMilliseconds();
-
-        authRedisTemplate.opsForValue().set(
-                redisKey,
-                refreshToken,
-                refreshTokenValidityMs,
-                TimeUnit.MILLISECONDS
-        );
-
-        return new TokenResponse(accessToken, refreshToken, member.getUsername(), refreshTokenValidityMs);
-    }
-
-
-    private OAuth2AccessTokenResponse getToken(ClientRegistration provider, String authorizationCode) {
-        OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> tokenResponseClient =
-                new RestClientAuthorizationCodeTokenResponseClient();
-
-        OAuth2AuthorizationExchange authorizationExchange = new OAuth2AuthorizationExchange(
-                OAuth2AuthorizationRequest.authorizationCode()
-                        .clientId(provider.getClientId())
-                        .authorizationUri(provider.getProviderDetails().getAuthorizationUri())
-                        .redirectUri(provider.getRedirectUri())
-                        .scopes(provider.getScopes())
-                        .build(),
-                OAuth2AuthorizationResponse.success(authorizationCode)
-                        .redirectUri(provider.getRedirectUri())
-                        .build()
-        );
-
-        OAuth2AuthorizationCodeGrantRequest grantRequest = new OAuth2AuthorizationCodeGrantRequest(provider,
-                authorizationExchange);
-        return tokenResponseClient.getTokenResponse(grantRequest);
-    }
-
-    private OAuth2User getUserInfo(ClientRegistration provider, OAuth2AccessTokenResponse tokenResponse) {
-        DefaultOAuth2UserService userService = new DefaultOAuth2UserService();
-        OAuth2UserRequest userRequest = new OAuth2UserRequest(provider, tokenResponse.getAccessToken());
-
-        try {
-            return userService.loadUser(userRequest);
-        } catch (OAuth2AuthenticationException e) {
-            throw new CustomException(ErrorCode.OAUTH_FAIL);
-        }
-    }
-
-    private OauthMember saveOrUpdate(OAuth2User oAuth2User, String providerName) {
-        Map<String, Object> attributes = oAuth2User.getAttributes();
-        String lowerCaseProviderName = providerName.toLowerCase();
-
-        String providerId;
-        String email;
-        String username;
-
-        switch (lowerCaseProviderName) {
-            case "google" -> {
-                providerId = attributes.get("sub").toString();
-                email = attributes.get("email").toString();
-                username = attributes.get("name").toString();
-            }
-            default -> throw new CustomException(ErrorCode.OAUTH_PROVIDER_NOT_SUPPORTED, providerName);
-        }
-
-        Optional<OauthMember> memberOptional = memberRepository.findByProviderAndProviderId(lowerCaseProviderName,
-                providerId);
-
-        OauthMember member;
-        if (memberOptional.isPresent()) {
-            member = memberOptional.get();
-        } else {
-            member = new OauthMember(
-                    email,
-                    username,
-                    Role.USER,
-                    lowerCaseProviderName,
-                    providerId
-            );
-            memberRepository.save(member);
-        }
-        return member;
+        loginHistoryRecorder.save(member.getId(), ipAddress, userAgent);
+        return tokenManager.issueTokens(member);
     }
 }
