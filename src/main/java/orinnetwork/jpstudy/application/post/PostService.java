@@ -33,26 +33,18 @@ public class PostService {
     /**
      * 게시물 생성
      *
-     * @param postRequest 게시물 작성 DTO
+     * @param request 게시물 작성 DTO
      * @param memberId    사용자 ID
      * @return 저장 형태 반환
      */
     @Transactional
-    public PostDetailResponse createPost(PostRequest postRequest, Long memberId, String ipAddress) {
-        Member author = memberRepository.findById(memberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-
-        Category category = null;
-        Long categoryId = postRequest.getCategoryId();
-
-        if (categoryId != null) {
-            category = categoryRepository.findById(categoryId)
-                    .orElseThrow(() -> new CustomException(ErrorCode.POST_CATEGORY_NOT_FOUND));
-        }
+    public PostDetailResponse createPost(PostRequest request, Long memberId, String ipAddress) {
+        Member author = getMember(memberId);
+        Category category = resolveCategory(request.getCategoryId());
 
         Post newPost = Post.builder()
-                .title(postRequest.getTitle())
-                .content(postRequest.getContent())
+                .title(request.getTitle())
+                .content(request.getContent())
                 .member(author)
                 .category(category)
                 .postType(PostType.NORMAL)
@@ -60,9 +52,7 @@ public class PostService {
                 .ipAddress(ipAddress)
                 .build();
 
-        Post savedPost = postRepository.save(newPost);
-
-        return PostDetailResponse.from(savedPost);
+        return PostDetailResponse.from(postRepository.save(newPost));
     }
 
     /**
@@ -73,15 +63,8 @@ public class PostService {
      */
     @Transactional
     public PostDetailResponse getPostById(Long id) {
-        Post post = postRepository.findById(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
-
-        if (post.getPostStatus() != PostStatus.ACTIVE) {
-            throw new CustomException(ErrorCode.POST_NOT_ACTIVE);
-        }
-
+        Post post = getActivePost(id);
         post.increaseViewCount();
-
         return PostDetailResponse.from(post);
     }
 
@@ -96,9 +79,7 @@ public class PostService {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
 
-        if (!post.getMember().getId().equals(memberId)) {
-            throw new CustomException(ErrorCode.POST_NOT_OWNER);
-        }
+        validateOwnership(post, memberId);
 
         post.delete();
     }
@@ -111,8 +92,37 @@ public class PostService {
      */
     public CustomPageResponse<PostSummaryResponse> getPosts(Pageable pageable) {
         Page<Post> postPage = postRepository.findByPostStatus(PostStatus.ACTIVE, pageable);
-        Page<PostSummaryResponse> responsePage = postPage.map(PostSummaryResponse::from);
+        return new CustomPageResponse<>(postPage.map(PostSummaryResponse::from));
+    }
 
-        return new CustomPageResponse<>(responsePage);
+    // --- Private ---
+
+    private Member getMember(Long memberId) {
+        return memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+    }
+
+    private Category resolveCategory(Long categoryId) {
+        if (categoryId == null) {
+            return null;
+        }
+        return categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new CustomException(ErrorCode.POST_CATEGORY_NOT_FOUND));
+    }
+
+    private Post getActivePost(Long id) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
+
+        if (post.getPostStatus() != PostStatus.ACTIVE) {
+            throw new CustomException(ErrorCode.POST_NOT_ACTIVE);
+        }
+        return post;
+    }
+
+    private void validateOwnership(Post post, Long memberId) {
+        if (!post.getMember().getId().equals(memberId)) {
+            throw new CustomException(ErrorCode.POST_NOT_OWNER);
+        }
     }
 }
