@@ -1,4 +1,4 @@
-package orinnetwork.jpstudy.presentation.config;
+package orinnetwork.jpstudy.infrastructure.config;
 
 import java.net.URI;
 import org.springframework.beans.factory.annotation.Value;

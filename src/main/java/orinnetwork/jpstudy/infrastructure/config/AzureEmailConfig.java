@@ -1,4 +1,4 @@
-package orinnetwork.jpstudy.presentation.config;
+package orinnetwork.jpstudy.infrastructure.config;
 
 import com.azure.communication.email.EmailClient;
 import com.azure.communication.email.EmailClientBuilder;

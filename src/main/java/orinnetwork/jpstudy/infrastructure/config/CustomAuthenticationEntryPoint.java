@@ -1,4 +1,4 @@
-package orinnetwork.jpstudy.presentation.config;
+package orinnetwork.jpstudy.infrastructure.config;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
