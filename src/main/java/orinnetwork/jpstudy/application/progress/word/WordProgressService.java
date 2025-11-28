@@ -28,7 +28,7 @@ public class WordProgressService {
     private final MemberRepository memberRepository;
     private final WordRepository wordRepository;
     private final MemberWordProgressRepository progressRepository;
-    private final FsrsScheduler fsrsScheduler; // 공통 FSRS 스케줄러
+    private final FsrsScheduler fsrsScheduler;
 
     private static final int NEW_CARDS_PER_SESSION = 30;
 
@@ -46,14 +46,12 @@ public class WordProgressService {
     public void updateProgress(Long memberId, Long wordId, ReviewDifficulty difficulty) {
         MemberWordProgress progress = getOrCreateProgress(memberId, wordId);
 
-        // FSRS 알고리즘 실행 (Word 전용 오버로딩 메서드 호출)
         ReviewResult result = fsrsScheduler.calculateNextReview(
                 progress,
                 progress.getWord(),
                 difficulty
         );
 
-        // 결과 저장 (레벨 자동 갱신 포함)
         progress.updateFsrs(
                 result.newStability(),
                 result.newDifficulty(),

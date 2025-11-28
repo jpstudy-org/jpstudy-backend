@@ -37,7 +37,8 @@ public class FsrsScheduler {
 
         // 첫 학습(New)인 경우
         if (progress.getStability() == 0.0) {
-            return calculateInitial(now, rating, kanji.getLevel());
+            double intrinsicD = (100.0 - kanji.getLevel()) / 10.0 + 1.0;
+            return calculateInitial(now, rating, intrinsicD);
         }
 
         // 복습(Review)인 경우
@@ -59,7 +60,8 @@ public class FsrsScheduler {
 
         // 첫 학습(New)인 경우
         if (progress.getStability() == 0.0) {
-            return calculateInitial(now, rating, word.getLevel());
+            double intrinsicD = calculateWordIntrinsicDifficulty(word.getLevel());
+            return calculateInitial(now, rating, intrinsicD);
         }
 
         // 복습(Review)인 경우
@@ -80,16 +82,26 @@ public class FsrsScheduler {
      * 초기 학습 계산 (Initial Learning)
      * DB 레벨(100~1)을 FSRS 난이도(1~10)로 변환하여 초기값 설정
      */
-    private ReviewResult calculateInitial(LocalDateTime now, int rating, int dbEntityLevel) {
-        double intrinsicD = (100.0 - dbEntityLevel) / 10.0 + 1.0;
-
+    private ReviewResult calculateInitial(LocalDateTime now, int rating, double intrinsicD) {
         double baseD = w[4] - (rating - 3) * w[5];
 
         double newD = constrain((baseD + intrinsicD) / 2.0);
 
-        double newS = w[rating - 1];
+        double newS = w[rating - 1]; // rating에 따른 초기 안정성
 
         return new ReviewResult(newS, newD, now, calculateDate(now, newS));
+    }
+
+    private double calculateWordIntrinsicDifficulty(int jlptLevel) {
+        return switch (jlptLevel) {
+            case 5 -> 3.0; // N5
+            case 4 -> 4.5; // N4
+            case 3 -> 6.0; // N3
+            case 2 -> 7.5; // N2
+            case 1 -> 9.0; // N1
+            case 0 -> 5.5; // 0: 보통 레벨 처리
+            default -> 5.0; // 예외 처리
+        };
     }
 
     /**
