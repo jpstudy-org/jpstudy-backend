@@ -1,6 +1,5 @@
 package orinnetwork.jpstudy.application.auth;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -9,6 +8,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import orinnetwork.jpstudy.application.auth.component.LoginHistoryRecorder;
 import orinnetwork.jpstudy.application.auth.component.LoginLockManager;
 import orinnetwork.jpstudy.application.auth.component.PasswordResetManager;
@@ -98,6 +98,7 @@ public class AuthService {
     /**
      * 비밀번호 초기화 요청
      */
+    @Transactional(readOnly = true)
     public void requestPasswordReset(PasswordResetRequest request) {
         Member member = getMemberByEmail(request.getEmail());
         passwordResetManager.sendResetLink(member.getEmail());
