@@ -28,7 +28,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
     // Azure Email Service
-    implementation 'com.azure:azure-communication-email:1.0.0'
+    implementation 'com.azure:azure-communication-email:1.1.0'
     implementation 'com.azure:azure-core:1.54.0'
 
     // S3 & S3-Presigner
@@ -52,6 +52,9 @@ dependencies {
     // redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
+    // RabbitMQ
+    implementation 'org.springframework.boot:spring-boot-starter-amqp'
+
     // test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
@@ -69,6 +72,16 @@ dependencies {
     // actuator
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'io.micrometer:micrometer-registry-prometheus'
+}
+
+configurations.configureEach {
+    resolutionStrategy.eachDependency { details ->
+        if (details.requested.group == 'io.netty') {
+            if (!details.requested.name.contains('tcnative')) {
+                details.useVersion '4.1.125.Final'
+            }
+        }
+    }
 }
 
 tasks.named('test') {

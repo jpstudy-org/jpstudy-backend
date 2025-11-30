@@ -1,4 +1,4 @@
-package orinnetwork.jpstudy.presentation.config;
+package orinnetwork.jpstudy.infrastructure.config;
 
 import lombok.Getter;
 import lombok.Setter;

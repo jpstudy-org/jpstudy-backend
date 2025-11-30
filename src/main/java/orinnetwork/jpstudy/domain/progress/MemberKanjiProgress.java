@@ -55,18 +55,42 @@ public class MemberKanjiProgress {
     @Column
     private LocalDateTime nextReviewAt;
 
-    public MemberKanjiProgress(Member member, Kanji kanji, MasteryLevel masteryLevel, LocalDateTime lastReviewedAt,
-                               LocalDateTime nextReviewAt) {
+    @Column(nullable = false)
+    private Double stability = 0.0;
+
+    @Column(nullable = false)
+    private Double difficulty = 0.0;
+
+    public MemberKanjiProgress(Member member, Kanji kanji, LocalDateTime now) {
         this.member = member;
         this.kanji = kanji;
-        this.masteryLevel = masteryLevel;
-        this.lastReviewedAt = lastReviewedAt;
-        this.nextReviewAt = nextReviewAt;
+        this.lastReviewedAt = now;
+        this.nextReviewAt = now;
+
+        this.masteryLevel = MasteryLevel.NEW;
+        this.stability = 0.0;
+        this.difficulty = 0.0;
     }
 
-    public void update(MasteryLevel newMasteryLevel, LocalDateTime lastReviewedAt, LocalDateTime nextReviewAt) {
-        this.masteryLevel = newMasteryLevel;
+    public void updateFsrs(Double newStability, Double newDifficulty, LocalDateTime lastReviewedAt,
+                           LocalDateTime nextReviewAt) {
+        this.stability = newStability;
+        this.difficulty = newDifficulty;
         this.lastReviewedAt = lastReviewedAt;
         this.nextReviewAt = nextReviewAt;
+
+        updateMasteryLevelByStability();
+    }
+
+    private void updateMasteryLevelByStability() {
+        if (this.stability < 1.0) {
+            this.masteryLevel = MasteryLevel.NEW;
+        } else if (this.stability < 21.0) {
+            this.masteryLevel = MasteryLevel.APPRENTICE;
+        } else if (this.stability < 90.0) {
+            this.masteryLevel = MasteryLevel.GURU;
+        } else {
+            this.masteryLevel = MasteryLevel.MASTERED;
+        }
     }
 }

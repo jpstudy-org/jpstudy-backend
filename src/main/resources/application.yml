@@ -38,6 +38,20 @@ spring:
     show-sql: ${SHOE_SQL:false}
     open-in-view: false
 
+  rabbitmq:
+    listener:
+      simple:
+        acknowledge-mode: auto
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 1000ms
+        default-requeue-rejected: false
+    host: ${RABBITMQ_HOST:localhost}
+    port: 5672
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+
   cloud:
     azure:
       communication:

@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import orinnetwork.jpstudy.application.progress.common.dto.ReviewDifficulty;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
