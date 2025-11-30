@@ -73,6 +73,10 @@ public class Post extends BaseEntity {
         this.ipAddress = ipAddress;
     }
 
+    public void changeStatus(PostStatus postStatus) {
+        this.postStatus = postStatus;
+    }
+
     public void update(String title, String content, Category category, PostStatus postStatus) {
         this.title = title;
         this.content = content;

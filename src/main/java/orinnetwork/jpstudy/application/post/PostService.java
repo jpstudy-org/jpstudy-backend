@@ -1,11 +1,13 @@
 package orinnetwork.jpstudy.application.post;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import orinnetwork.jpstudy.application.dto.CustomPageResponse;
+import orinnetwork.jpstudy.application.post.dto.PostCreatedEvent;
 import orinnetwork.jpstudy.application.post.dto.PostDetailResponse;
 import orinnetwork.jpstudy.application.post.dto.PostRequest;
 import orinnetwork.jpstudy.application.post.dto.PostSummaryResponse;
@@ -17,6 +19,7 @@ import orinnetwork.jpstudy.domain.post.Post;
 import orinnetwork.jpstudy.domain.post.PostRepository;
 import orinnetwork.jpstudy.domain.post.PostStatus;
 import orinnetwork.jpstudy.domain.post.PostType;
+import orinnetwork.jpstudy.infrastructure.config.RabbitConfig;
 import orinnetwork.jpstudy.infrastructure.exception.CustomException;
 import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
 
@@ -28,6 +31,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final MemberRepository memberRepository;
     private final CategoryRepository categoryRepository;
+    private final RabbitTemplate rabbitTemplate;
 
 
     /**
@@ -52,7 +56,11 @@ public class PostService {
                 .ipAddress(ipAddress)
                 .build();
 
-        return PostDetailResponse.from(postRepository.save(newPost));
+        Post savedPost = postRepository.save(newPost);
+
+        publishPostCreatedEvent(savedPost.getId());
+
+        return PostDetailResponse.from(savedPost);
     }
 
     /**
@@ -124,5 +132,15 @@ public class PostService {
         if (!post.getMember().getId().equals(memberId)) {
             throw new CustomException(ErrorCode.POST_NOT_OWNER);
         }
+    }
+
+    private void publishPostCreatedEvent(Long postId) {
+        PostCreatedEvent event = new PostCreatedEvent(postId);
+
+        rabbitTemplate.convertAndSend(
+                RabbitConfig.POST_EXCHANGE_NAME,
+                RabbitConfig.POST_CREATED_ROUTING_KEY,
+                event
+        );
     }
 }
