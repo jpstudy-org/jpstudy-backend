@@ -99,7 +99,27 @@ public class PostService {
      * @return 해당 페이지 게시물 [PostSummaryResponseDto]
      */
     public CustomPageResponse<PostSummaryResponse> getPosts(Pageable pageable) {
-        Page<Post> postPage = postRepository.findByPostStatus(PostStatus.ACTIVE, pageable);
+        Page<Post> postPage = postRepository.findByPostStatusAndPostType(PostStatus.ACTIVE, PostType.NORMAL, pageable);
+        return new CustomPageResponse<>(postPage.map(PostSummaryResponse::from));
+    }
+
+    /**
+     * 공지 조회
+     * @return 최근 3개
+     */
+    public CustomPageResponse<PostSummaryResponse> getNotices(Pageable pageable) {
+
+        Page<Post> postPage = postRepository.findByPostStatusAndPostType(PostStatus.ACTIVE, PostType.NOTICE, pageable);
+        return new CustomPageResponse<>(postPage.map(PostSummaryResponse::from));
+    }
+
+    /**
+     * 공지 페이징 조회
+     * @param pageable 페이지 번호
+     * @return 해당 공지 게시물
+     */
+    public CustomPageResponse<PostSummaryResponse> getNoticePosts(Pageable pageable) {
+        Page<Post> postPage = postRepository.findByPostStatusAndPostType(PostStatus.ACTIVE, PostType.NOTICE, pageable);
         return new CustomPageResponse<>(postPage.map(PostSummaryResponse::from));
     }
 

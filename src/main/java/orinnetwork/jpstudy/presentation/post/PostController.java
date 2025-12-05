@@ -6,6 +6,7 @@ import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -74,6 +75,23 @@ public class PostController {
             Pageable pageable
     ) {
         CustomPageResponse<PostSummaryResponse> responsePage = postService.getPosts(pageable);
+        return ResponseEntity.ok(responsePage);
+    }
+
+    @GetMapping("/notices/recent")
+    public ResponseEntity<CustomPageResponse<PostSummaryResponse>> getRecentNotices(
+            @PageableDefault(size = 3, sort = "createdAt", direction = Direction.DESC)
+            Pageable pageable
+    ) {
+        CustomPageResponse<PostSummaryResponse> notices = postService.getNotices(pageable);
+        return ResponseEntity.ok(notices);
+    }
+
+    @GetMapping("/notices")
+    public ResponseEntity<CustomPageResponse<PostSummaryResponse>> getNoticePage(
+            @PageableDefault(size = 20, sort = "createdAt", direction = Direction.DESC)
+            Pageable pageable) {
+        CustomPageResponse<PostSummaryResponse> responsePage = postService.getNoticePosts(pageable);
         return ResponseEntity.ok(responsePage);
     }
 }
