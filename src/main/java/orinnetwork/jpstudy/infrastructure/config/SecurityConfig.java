@@ -1,5 +1,6 @@
 package orinnetwork.jpstudy.infrastructure.config;
 
+import jakarta.servlet.DispatcherType;
 import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -76,6 +77,7 @@ public class SecurityConfig {
 
         http
                 .authorizeHttpRequests(auth -> auth
+                        .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                         .requestMatchers(
                                 "/oauth2/**",
                                 "/login/oauth2/code/**",
