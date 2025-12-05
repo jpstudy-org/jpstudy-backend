@@ -34,7 +34,6 @@ public class SseConnector {
                     .name("connect")
                     .data("Connected to SSE"));
         } catch (IOException e) {
-            emitter.completeWithError(e);
             sseEmitterRepository.deleteById(userId);
         }
     }
