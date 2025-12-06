@@ -22,7 +22,9 @@ public class AuthResponseHelper {
             HttpServletResponse response) {
 
         boolean isProduction = Arrays.asList(env.getActiveProfiles()).contains("prod");
+
         String cookieDomain = isProduction ? "jpstudy.org" : null;
+        String sameSitePolicy = isProduction ? "None" : "Lax";
 
         ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", tokenDto.getRefreshToken())
                 .httpOnly(true)
@@ -30,6 +32,7 @@ public class AuthResponseHelper {
                 .path("/")
                 .maxAge(tokenDto.getRefreshTokenValidityMs() / 1000)
                 .domain(cookieDomain)
+                .sameSite(sameSitePolicy)
                 .build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
