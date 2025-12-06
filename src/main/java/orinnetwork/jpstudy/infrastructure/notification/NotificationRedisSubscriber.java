@@ -1,7 +1,6 @@
 package orinnetwork.jpstudy.infrastructure.notification;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
@@ -29,9 +28,8 @@ public class NotificationRedisSubscriber implements MessageListener {
                 emitter.send(SseEmitter.event()
                         .name("notification")
                         .data(notificationContent));
-            } catch (IOException e) {
+            } catch (Exception e) {
                 sseEmitterRepository.deleteById(userId);
-                emitter.completeWithError(e);
             }
         }
     }

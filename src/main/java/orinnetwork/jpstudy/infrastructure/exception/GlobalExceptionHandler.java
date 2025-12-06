@@ -13,6 +13,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 import orinnetwork.jpstudy.infrastructure.exception.dto.ErrorResponse;
 
 @RestControllerAdvice
@@ -25,6 +26,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(CustomException.class)
     protected ResponseEntity<ErrorResponse> handleCustomException(CustomException e) {
         return createErrorResponse(e.getErrorCode(), e.getArgs());
+    }
+    @ExceptionHandler(AsyncRequestTimeoutException.class)
+    public void handleAsyncRequestTimeoutException(AsyncRequestTimeoutException e) {
+        log.debug("SSE 연결 시간 만료");
     }
 
     @ExceptionHandler(BadCredentialsException.class)

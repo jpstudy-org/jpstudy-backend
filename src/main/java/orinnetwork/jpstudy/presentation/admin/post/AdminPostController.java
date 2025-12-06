@@ -4,10 +4,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -15,8 +19,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import orinnetwork.jpstudy.application.admin.post.AdminPostService;
+import orinnetwork.jpstudy.application.dto.CustomPageResponse;
+import orinnetwork.jpstudy.application.post.PostService;
 import orinnetwork.jpstudy.application.post.dto.PostDetailResponse;
 import orinnetwork.jpstudy.application.post.dto.PostRequest;
+import orinnetwork.jpstudy.application.post.dto.PostSummaryResponse;
 import orinnetwork.jpstudy.infrastructure.security.CustomUserDetails;
 import orinnetwork.jpstudy.infrastructure.util.IpUtil;
 
@@ -27,6 +34,7 @@ import orinnetwork.jpstudy.infrastructure.util.IpUtil;
 public class AdminPostController {
 
     private final AdminPostService adminPostService;
+    private final PostService postService;
 
     @PostMapping("/notices")
     public ResponseEntity<PostDetailResponse> createNotice(
@@ -45,6 +53,14 @@ public class AdminPostController {
         return ResponseEntity
                 .created(URI.create("/api/posts/" + response.getPostId()))
                 .body(response);
+    }
+
+    @GetMapping("/notices")
+    public ResponseEntity<CustomPageResponse<PostSummaryResponse>> getNoticePage(
+            @PageableDefault(size = 20, sort = "createdAt", direction = Direction.DESC)
+            Pageable pageable) {
+        CustomPageResponse<PostSummaryResponse> responsePage = postService.getNoticePosts(pageable);
+        return ResponseEntity.ok(responsePage);
     }
 
     @PutMapping("/notices/{postId}")
