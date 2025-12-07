@@ -13,6 +13,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 import orinnetwork.jpstudy.infrastructure.exception.dto.ErrorResponse;
 
@@ -27,9 +28,15 @@ public class GlobalExceptionHandler {
     protected ResponseEntity<ErrorResponse> handleCustomException(CustomException e) {
         return createErrorResponse(e.getErrorCode(), e.getArgs());
     }
+
+    // SSE 부분 (연결 시간 만료 - 불필요 로그)
     @ExceptionHandler(AsyncRequestTimeoutException.class)
-    public void handleAsyncRequestTimeoutException(AsyncRequestTimeoutException e) {
-        log.debug("SSE 연결 시간 만료");
+    public void handleAsyncRequestTimeoutException() {
+    }
+
+    // SSE 부분 (연결 끊어짐 - 불필요 로그)
+    @ExceptionHandler(AsyncRequestNotUsableException.class)
+    public void handleAsyncRequestNotUsableException() {
     }
 
     @ExceptionHandler(BadCredentialsException.class)
