@@ -91,10 +91,6 @@ public class Post extends BaseEntity {
         this.postStatus = PostStatus.DELETED;
     }
 
-    public void increaseViewCount() {
-        this.viewCount++;
-    }
-
     public void increaseCommentCount() {
         this.commentCount++;
     }

@@ -26,13 +26,13 @@ public class PostSummaryResponse {
         this.commentCount = commentCount;
     }
 
-    public static PostSummaryResponse from(Post post) {
+    public static PostSummaryResponse from(Post post, int viewCount) {
         return PostSummaryResponse.builder()
                 .postId(post.getId())
                 .title(post.getTitle())
                 .authorNickname(post.getMember().getUsername())
                 .createdAt(post.getCreatedAt())
-                .viewCount(post.getViewCount())
+                .viewCount(viewCount)
                 .commentCount(post.getCommentCount())
                 .build();
     }
