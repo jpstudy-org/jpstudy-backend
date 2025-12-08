@@ -1,8 +1,12 @@
 package orinnetwork.jpstudy.presentation.admin.dictionary.kanji;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -21,6 +25,8 @@ import orinnetwork.jpstudy.application.admin.dictionary.kanji.dto.KanjiRequest;
 import orinnetwork.jpstudy.application.admin.dictionary.kanji.dto.KanjiResponse;
 import orinnetwork.jpstudy.application.dto.CustomPageResponse;
 
+@Tag(name = "Admin - Dictionary (Kanji)", description = "관리자: 한자 사전 생성, 조회 및 관리")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/admin/kanji")
 @RequiredArgsConstructor
@@ -29,8 +35,8 @@ public class AdminKanjiController {
 
     private final KanjiService kanjiService;
 
+    @Operation(summary = "한자 생성 (단일)", description = "새로운 한자 데이터를 단일로 생성합니다.")
     @PostMapping
-    @Operation(summary = "한자 생성 (단일)", description = "한자 데이터를 생성합니다")
     public ResponseEntity<KanjiResponse> createKanji(@RequestBody KanjiRequest kanjiRequest) {
 
         KanjiResponse response = kanjiService.createKanji(kanjiRequest);
@@ -38,45 +44,37 @@ public class AdminKanjiController {
     }
 
 
+    @Operation(summary = "한자 생성 및 수정 (다중)", description = "한자 데이터 리스트를 받아 일괄적으로 생성하거나 기존 한자를 수정합니다.")
     @PostMapping("/mult")
-    @Operation(summary = "한자 생성 (다중)", description = "한자 데이터를 다중으로 업로드합니다")
     public ResponseEntity<List<KanjiResponse>> createKanjis(@RequestBody List<KanjiRequest> kanjiRequests) {
 
         List<KanjiResponse> responses = kanjiService.createOrUpdateKanjisFromCSV(kanjiRequests);
         return ResponseEntity.status(HttpStatus.CREATED).body(responses);
     }
 
-
+    @Operation(summary = "한자 목록 검색 및 조회", description = "키워드를 통해 한자를 검색하고 결과를 페이지네이션하여 반환합니다.")
     @GetMapping
-    @Operation(summary = "한자 조회 (페이징)", description = "페이지 형태로 한자 목록을 조회합니다")
     public ResponseEntity<CustomPageResponse<KanjiResponse>> getKanjis(
+            @Parameter(description = "검색 키워드")
             @RequestParam(required = false) String keyword,
+
+            @ParameterObject
             @PageableDefault(size = 10) Pageable pageable) {
 
         CustomPageResponse<KanjiResponse> kanjiPage = kanjiService.getKanjis(keyword, pageable);
         return ResponseEntity.ok(kanjiPage);
     }
 
-    /**
-     * 한자 수정
-     *
-     * @param kanjiRequest 수정 정보
-     */
+    @Operation(summary = "한자 수정", description = "한자 ID를 포함하여 기존 한자 정보를 수정합니다.")
     @PutMapping
-    @Operation(summary = "한자 수정", description = "한자 정보를 수정합니다")
     public ResponseEntity<KanjiResponse> updateKanji(@RequestBody KanjiRequest kanjiRequest) {
 
         KanjiResponse response = kanjiService.updateKanji(kanjiRequest);
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * 한자 삭제
-     *
-     * @param kanjiRequest 삭제 할 한자 정보
-     */
+    @Operation(summary = "한자 삭제", description = "한자 ID를 포함한 요청 정보를 받아 해당 한자를 삭제(비활성화) 처리합니다.")
     @DeleteMapping
-    @Operation(summary = "한자 삭제", description = "한자를 삭제합니다 (비활성화 방식)")
     public ResponseEntity<Void> deleteKanji(@RequestBody KanjiRequest kanjiRequest) {
         kanjiService.deleteKanji(kanjiRequest);
         return ResponseEntity.noContent().build();

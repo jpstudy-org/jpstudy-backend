@@ -1,5 +1,6 @@
 package orinnetwork.jpstudy.presentation.auth;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import orinnetwork.jpstudy.infrastructure.config.AppProperties;
 
+@Hidden
 @RestController
 @RequiredArgsConstructor
 public class OAuthCallbackController {
