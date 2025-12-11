@@ -13,9 +13,13 @@ public class LocalMember extends Member {
     @Column(name = "password")
     private String password;
 
-    public LocalMember(String email, String username, String password, Role role) {
+    private LocalMember(String email, String username, String password, Role role) {
         super(email, username, role);
         this.password = password;
+    }
+
+    public static LocalMember join(String email, String username, String encodePassword) {
+        return new LocalMember(email, username, encodePassword, Role.USER);
     }
 
     @Override

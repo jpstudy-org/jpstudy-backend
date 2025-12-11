@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import orinnetwork.jpstudy.domain.member.MemberRepository;
 import orinnetwork.jpstudy.domain.member.OauthMember;
-import orinnetwork.jpstudy.domain.member.Role;
 import orinnetwork.jpstudy.infrastructure.exception.CustomException;
 import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
 
@@ -27,13 +26,14 @@ public class OAuthMemberManager {
         String username = userInfo.get("name");
 
         return memberRepository.findByProviderAndProviderId(lowerCaseProvider, providerId)
-                .orElseGet(() -> memberRepository.save(new OauthMember(
-                        email,
-                        username,
-                        Role.USER,
-                        lowerCaseProvider,
-                        providerId
-                )));
+                .orElseGet(() -> memberRepository.save(
+                        OauthMember.from(
+                                email,
+                                username,
+                                lowerCaseProvider,
+                                providerId
+                        )
+                ));
     }
 
     private Map<String, String> extractAttributes(String provider, Map<String, Object> attributes) {
