@@ -44,6 +44,14 @@ public class KanjiProgressService {
 
     @Transactional
     public void updateProgress(Long memberId, Long kanjiId, ReviewDifficulty difficulty) {
+
+        /**
+         * TODO: 학습에서 'AGAIN' 로직은 백엔드에서 처리해야할까?
+         * 프론트에 다시 데이터를 받는 구조가 아닌데, 이러한 로직이면 계속 시간이 중첩으로 쌓여서 반복해서 AGAIN하면,
+         * 학습 곡선에 오류가 발생 : 일단 return으로 무시하되, 반드시 대책을 강구할 것
+         */
+        if (difficulty == ReviewDifficulty.AGAIN) return;
+
         MemberKanjiProgress progress = getOrCreateProgress(memberId, kanjiId);
 
         ReviewResult result = fsrsScheduler.calculateNextReview(
