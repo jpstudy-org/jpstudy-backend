@@ -11,6 +11,8 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import orinnetwork.jpstudy.infrastructure.exception.CustomException;
+import orinnetwork.jpstudy.infrastructure.exception.ErrorCode;
 
 @Entity
 @Getter
@@ -36,13 +38,27 @@ public class Notification {
 
     private String relatedUrl;
 
-    @Builder
-    public Notification(Long recipientId, String content, NotificationType type, String relatedUrl, Boolean isRead) {
+    @Builder(access = AccessLevel.PRIVATE)
+    private Notification(Long recipientId, String content, NotificationType type, String relatedUrl, Boolean isRead) {
         this.recipientId = recipientId;
         this.content = content;
         this.type = type;
         this.relatedUrl = relatedUrl;
         this.isRead = isRead != null ? isRead : false;
+    }
+
+    public static Notification create(Long recipientId, NotificationType type, String content, String url) {
+        if (type == NotificationType.INQUIRY && (url == null || url.isBlank())) {
+            throw new CustomException(ErrorCode.INVALID_INPUT);
+        }
+
+        return Notification.builder()
+                .recipientId(recipientId)
+                .content(content)
+                .type(type)
+                .relatedUrl(url)
+                .isRead(false)
+                .build();
     }
 
     public void read() {
