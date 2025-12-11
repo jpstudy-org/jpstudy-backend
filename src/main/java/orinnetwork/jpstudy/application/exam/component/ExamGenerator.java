@@ -46,11 +46,9 @@ public class ExamGenerator {
     }
 
     private Exam createAndSaveExam(ExamBlueprint blueprint, String title) {
-        Exam exam = Exam.builder()
-                .level(blueprint.getLevel())
-                .title(title)
-                .totalTimeMinutes(blueprint.getTotalTimeMinutes())
-                .build();
+        Exam exam = Exam.create(
+                blueprint.getLevel(), title, blueprint.getTotalTimeMinutes()
+        );
         return examRepository.save(exam);
     }
 
