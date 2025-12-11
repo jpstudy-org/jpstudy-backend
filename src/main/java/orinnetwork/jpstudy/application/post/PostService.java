@@ -53,15 +53,13 @@ public class PostService {
         Member author = getMember(memberId);
         Category category = resolveCategory(request.getCategoryId());
 
-        Post newPost = Post.builder()
-                .title(request.getTitle())
-                .content(request.getContent())
-                .member(author)
-                .category(category)
-                .postType(PostType.NORMAL)
-                .postStatus(PostStatus.ACTIVE)
-                .ipAddress(ipAddress)
-                .build();
+        Post newPost = Post.create(
+                request.getTitle(),
+                request.getContent(),
+                author,
+                category,
+                ipAddress
+        );
 
         Post savedPost = postRepository.save(newPost);
 

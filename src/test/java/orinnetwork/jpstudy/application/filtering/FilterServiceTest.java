@@ -3,6 +3,7 @@ package orinnetwork.jpstudy.application.filtering;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -18,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import orinnetwork.jpstudy.domain.filtering.FilterLogRepository;
 import orinnetwork.jpstudy.domain.filtering.KeywordType;
 import orinnetwork.jpstudy.domain.filtering.engine.AhoCorasickEngine;
+import orinnetwork.jpstudy.domain.member.Member;
 import orinnetwork.jpstudy.domain.post.Post;
 import orinnetwork.jpstudy.domain.post.PostRepository;
 import orinnetwork.jpstudy.domain.post.PostStatus;
@@ -34,7 +36,9 @@ class FilterServiceTest {
     @Mock private FilterLogRepository filterLogRepository;
 
     private Post createPost() {
-        return Post.builder().title("제목").content("내용").postStatus(PostStatus.ACTIVE).build();
+        Member dummyMember = mock(Member.class);
+
+        return Post.create("제목", "내용", dummyMember, null, "127.0.0.1");
     }
 
     @Test
