@@ -50,13 +50,23 @@ public class Comment extends BaseEntity {
     @Column(length = 50)
     private String ipAddress;
 
-    @Builder
-    public Comment(String content, Post post, Member member, String ipAddress, CommentStatus commentStatus) {
+    @Builder(access = AccessLevel.PRIVATE)
+    private Comment(String content, Post post, Member member, String ipAddress, CommentStatus commentStatus) {
         this.content = content;
         this.post = post;
         this.member = member;
         this.ipAddress = ipAddress;
         this.commentStatus = commentStatus;
+    }
+
+    public static Comment write(String content, Post post, Member member, String ipAddress) {
+        return Comment.builder()
+                .content(content)
+                .post(post)
+                .member(member)
+                .ipAddress(ipAddress)
+                .commentStatus(CommentStatus.ACTIVE)
+                .build();
     }
 
     public void update(String content) {

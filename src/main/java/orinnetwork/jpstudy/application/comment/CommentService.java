@@ -33,13 +33,9 @@ public class CommentService {
         Post post = getActivePost(postId);
         Member member = getMember(memberId);
 
-        Comment savedComment = commentRepository.save(Comment.builder()
-                .content(request.getContent())
-                .post(post)
-                .member(member)
-                .ipAddress(ipAddress)
-                .commentStatus(CommentStatus.ACTIVE)
-                .build());
+        Comment savedComment = commentRepository.save(
+                Comment.write(request.getContent(), post, member, ipAddress)
+        );
 
         post.increaseCommentCount();
 
