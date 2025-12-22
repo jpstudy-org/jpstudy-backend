@@ -9,12 +9,12 @@ import orinnetwork.jpstudy.application.exam.dto.GradeResult;
 import orinnetwork.jpstudy.application.exam.dto.StartTestResponse;
 import orinnetwork.jpstudy.application.exam.dto.SubmitTestRequest;
 import orinnetwork.jpstudy.application.exam.dto.TestResultResponse;
+import orinnetwork.jpstudy.domain.exam.AttemptStatus;
 import orinnetwork.jpstudy.domain.exam.Exam;
 import orinnetwork.jpstudy.domain.exam.ExamQuestionRepository;
 import orinnetwork.jpstudy.domain.exam.ExamRepository;
 import orinnetwork.jpstudy.domain.exam.MemberAnswerRepository;
 import orinnetwork.jpstudy.domain.exam.TestAttempt;
-import orinnetwork.jpstudy.domain.exam.TestAttempt.AttemptStatus;
 import orinnetwork.jpstudy.domain.exam.TestAttemptRepository;
 import orinnetwork.jpstudy.domain.member.Member;
 import orinnetwork.jpstudy.domain.member.MemberRepository;
@@ -48,10 +48,9 @@ public class TestAttemptService {
         Exam exam = examRepository.findById(examId)
                 .orElseThrow(() -> new CustomException(ErrorCode.EXAM_NOT_FOUND));
 
-        TestAttempt attempt = testAttemptRepository.save(TestAttempt.builder()
-                .member(member)
-                .exam(exam)
-                .build());
+        TestAttempt attempt = testAttemptRepository.save(
+                TestAttempt.start(member, exam)
+        );
 
         return StartTestResponse.of(attempt,
                 examQuestionRepository.findByExamIdOrderByQuestionNumberAsc(examId),

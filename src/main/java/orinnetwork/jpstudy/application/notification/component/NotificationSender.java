@@ -26,6 +26,7 @@ public class NotificationSender {
         String content = resolveMessage(messageCode, languageCode, args);
 
         saveNotification(recipientId, type, content, url);
+
         publishToRedis(recipientId, content);
     }
 
@@ -35,13 +36,7 @@ public class NotificationSender {
     }
 
     private void saveNotification(Long recipientId, NotificationType type, String content, String url) {
-        Notification notification = Notification.builder()
-                .recipientId(recipientId)
-                .content(content)
-                .type(type)
-                .relatedUrl(url)
-                .isRead(false)
-                .build();
+        Notification notification = Notification.create(recipientId, type, content, url);
         notificationRepository.save(notification);
     }
 

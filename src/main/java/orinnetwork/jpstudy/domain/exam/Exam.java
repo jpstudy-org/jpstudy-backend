@@ -30,10 +30,18 @@ public class Exam {
 
     private int totalTimeMinutes;
 
-    @Builder
-    public Exam(Level level, String title, int totalTimeMinutes) {
+    @Builder(access = AccessLevel.PRIVATE)
+    private Exam(Level level, String title, int totalTimeMinutes) {
         this.level = level;
         this.title = title;
         this.totalTimeMinutes = totalTimeMinutes;
+    }
+
+    public static Exam create(Level level, String title, int totalTimeMinutes) {
+        return Exam.builder()
+                .level(level)
+                .title(title)
+                .totalTimeMinutes(totalTimeMinutes)
+                .build();
     }
 }

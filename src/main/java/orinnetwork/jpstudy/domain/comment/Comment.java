@@ -8,8 +8,10 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,6 +21,9 @@ import orinnetwork.jpstudy.domain.member.Member;
 import orinnetwork.jpstudy.domain.post.Post;
 
 @Entity
+@Table(name = "comment", indexes = {
+        @Index(name = "idx_comment_post_created", columnList = "post_id, created_at DESC")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Comment extends BaseEntity {
@@ -45,13 +50,23 @@ public class Comment extends BaseEntity {
     @Column(length = 50)
     private String ipAddress;
 
-    @Builder
-    public Comment(String content, Post post, Member member, String ipAddress, CommentStatus commentStatus) {
+    @Builder(access = AccessLevel.PRIVATE)
+    private Comment(String content, Post post, Member member, String ipAddress, CommentStatus commentStatus) {
         this.content = content;
         this.post = post;
         this.member = member;
         this.ipAddress = ipAddress;
         this.commentStatus = commentStatus;
+    }
+
+    public static Comment write(String content, Post post, Member member, String ipAddress) {
+        return Comment.builder()
+                .content(content)
+                .post(post)
+                .member(member)
+                .ipAddress(ipAddress)
+                .commentStatus(CommentStatus.ACTIVE)
+                .build();
     }
 
     public void update(String content) {

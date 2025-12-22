@@ -32,10 +32,6 @@ public class TestAttempt {
     @ManyToOne(fetch = FetchType.LAZY)
     private Exam exam;
 
-    public enum AttemptStatus {
-        IN_PROGRESS, COMPLETED
-    }
-
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private Integer score;
@@ -43,12 +39,22 @@ public class TestAttempt {
     @Enumerated(EnumType.STRING)
     private AttemptStatus status;
 
-    @Builder
-    public TestAttempt(Member member, Exam exam) {
+    @Builder(access = AccessLevel.PRIVATE)
+    private TestAttempt(Member member, Exam exam, LocalDateTime startTime, AttemptStatus status) {
         this.member = member;
         this.exam = exam;
-        this.startTime = LocalDateTime.now();
-        this.status = AttemptStatus.IN_PROGRESS;
+        this.startTime = startTime;
+        this.status = status;
+        this.score = 0;
+    }
+
+    public static TestAttempt start(Member member, Exam exam) {
+        return TestAttempt.builder()
+                .member(member)
+                .exam(exam)
+                .startTime(LocalDateTime.now())
+                .status(AttemptStatus.IN_PROGRESS)
+                .build();
     }
 
     public void complete(Integer score) {

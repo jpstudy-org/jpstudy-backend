@@ -33,13 +33,9 @@ public class CommentService {
         Post post = getActivePost(postId);
         Member member = getMember(memberId);
 
-        Comment savedComment = commentRepository.save(Comment.builder()
-                .content(request.getContent())
-                .post(post)
-                .member(member)
-                .ipAddress(ipAddress)
-                .commentStatus(CommentStatus.ACTIVE)
-                .build());
+        Comment savedComment = commentRepository.save(
+                Comment.write(request.getContent(), post, member, ipAddress)
+        );
 
         post.increaseCommentCount();
 
@@ -62,6 +58,8 @@ public class CommentService {
     public void deleteComment(Long commentId, Long memberId) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CustomException(ErrorCode.COMMENT_NOT_FOUND));
+
+        // TODO: 댓글 삭제 기능은 아직 서비스에 반영되지 않음. 사유 (삭제 시 게시글 increaseCommentCount도 증가 시켜야 함)
 
         validateCommentOwner(comment, memberId);
 

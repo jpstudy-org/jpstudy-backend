@@ -47,7 +47,7 @@ class OAuthMemberManagerTest {
         given(memberRepository.findByProviderAndProviderId("google", "123456789"))
                 .willReturn(Optional.empty());
 
-        OauthMember savedMember = new OauthMember("test@gmail.com", "Tester", null, "google", "123456789");
+        OauthMember savedMember = OauthMember.from("test@gmail.com", "Tester", "google", "123456789");
         given(memberRepository.save(any(OauthMember.class))).willReturn(savedMember);
 
         OauthMember result = oAuthMemberManager.syncMember(provider, oAuth2User);
@@ -69,7 +69,7 @@ class OAuthMemberManagerTest {
                 "name", "Tester"
         ));
 
-        OauthMember existingMember = new OauthMember("test@gmail.com", "Tester", null, "google", "123456789");
+        OauthMember existingMember = OauthMember.from("test@gmail.com", "Tester", "google", "123456789");
         given(memberRepository.findByProviderAndProviderId("google", "123456789"))
                 .willReturn(Optional.of(existingMember));
 

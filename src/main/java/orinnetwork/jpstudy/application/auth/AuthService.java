@@ -22,7 +22,6 @@ import orinnetwork.jpstudy.application.notification.NotificationService;
 import orinnetwork.jpstudy.domain.member.LocalMember;
 import orinnetwork.jpstudy.domain.member.Member;
 import orinnetwork.jpstudy.domain.member.MemberRepository;
-import orinnetwork.jpstudy.domain.member.Role;
 import orinnetwork.jpstudy.domain.member.UsernameValidator;
 import orinnetwork.jpstudy.domain.notification.NotificationMessage;
 import orinnetwork.jpstudy.domain.notification.NotificationType;
@@ -124,11 +123,11 @@ public class AuthService {
     // --- private Helper ---
 
     private Member createAndSaveMember(SignUpRequest request) {
-        return memberRepository.save(new LocalMember(
+        return memberRepository.save(
+                LocalMember.join(
                 request.getEmail(),
                 request.getUsername(),
-                passwordEncoder.encode(request.getPassword()),
-                Role.USER
+                passwordEncoder.encode(request.getPassword())
         ));
     }
 

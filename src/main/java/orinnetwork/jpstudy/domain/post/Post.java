@@ -61,8 +61,8 @@ public class Post extends BaseEntity {
     @Column(nullable = false)
     private int commentCount;
 
-    @Builder
-    public Post(String title, String content, Member member, Category category, PostType postType,
+    @Builder(access = AccessLevel.PRIVATE)
+    private Post(String title, String content, Member member, Category category, PostType postType,
                 PostStatus postStatus, String ipAddress) {
         this.title = title;
         this.content = content;
@@ -71,6 +71,29 @@ public class Post extends BaseEntity {
         this.postType = postType;
         this.postStatus = postStatus;
         this.ipAddress = ipAddress;
+    }
+
+    public static Post create(String title, String content, Member member, Category category, String ipAddress) {
+        return Post.builder()
+                .title(title)
+                .content(content)
+                .member(member)
+                .category(category)
+                .postType(PostType.NORMAL)
+                .postStatus(PostStatus.ACTIVE)
+                .ipAddress(ipAddress)
+                .build();
+    }
+
+    public static Post createNotice(String title, String content, Member member, String ipAddress) {
+        return Post.builder()
+                .title(title)
+                .content(content)
+                .member(member)
+                .postType(PostType.NOTICE)
+                .postStatus(PostStatus.ACTIVE)
+                .ipAddress(ipAddress)
+                .build();
     }
 
     public void changeStatus(PostStatus postStatus) {
@@ -89,10 +112,6 @@ public class Post extends BaseEntity {
             throw new IllegalArgumentException("이미 삭제된 게시글입니다.");
         }
         this.postStatus = PostStatus.DELETED;
-    }
-
-    public void increaseViewCount() {
-        this.viewCount++;
     }
 
     public void increaseCommentCount() {

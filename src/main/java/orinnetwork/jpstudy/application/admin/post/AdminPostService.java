@@ -26,15 +26,12 @@ public class AdminPostService {
         Member admin = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-        Post notice = Post.builder()
-                .title(request.getTitle())
-                .content(request.getContent())
-                .member(admin)
-                .category(null)
-                .postType(PostType.NOTICE)
-                .postStatus(PostStatus.ACTIVE)
-                .ipAddress(ipAddress)
-                .build();
+        Post notice = Post.createNotice(
+                request.getTitle(),
+                request.getContent(),
+                admin,
+                ipAddress
+        );
 
         Post savedNotice = postRepository.save(notice);
 

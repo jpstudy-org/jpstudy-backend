@@ -1,9 +1,15 @@
 package orinnetwork.jpstudy.application.post;
 
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.ScanOptions;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import orinnetwork.jpstudy.application.dto.CustomPageResponse;
@@ -32,29 +38,28 @@ public class PostService {
     private final MemberRepository memberRepository;
     private final CategoryRepository categoryRepository;
     private final RabbitTemplate rabbitTemplate;
+    private final StringRedisTemplate redisTemplate;
 
 
     /**
      * 게시물 생성
      *
-     * @param request 게시물 작성 DTO
-     * @param memberId    사용자 ID
-     * @return 저장 형태 반환
+     * @param request       게시물 작성 DTO
+     * @param memberId      사용자 ID
+     * @return              저장 형태 반환
      */
     @Transactional
     public PostDetailResponse createPost(PostRequest request, Long memberId, String ipAddress) {
         Member author = getMember(memberId);
         Category category = resolveCategory(request.getCategoryId());
 
-        Post newPost = Post.builder()
-                .title(request.getTitle())
-                .content(request.getContent())
-                .member(author)
-                .category(category)
-                .postType(PostType.NORMAL)
-                .postStatus(PostStatus.ACTIVE)
-                .ipAddress(ipAddress)
-                .build();
+        Post newPost = Post.create(
+                request.getTitle(),
+                request.getContent(),
+                author,
+                category,
+                ipAddress
+        );
 
         Post savedPost = postRepository.save(newPost);
 
@@ -69,10 +74,9 @@ public class PostService {
      * @param id 게시물 ID
      * @return 게시물 내용
      */
-    @Transactional
     public PostDetailResponse getPostById(Long id) {
         Post post = getActivePost(id);
-        post.increaseViewCount();
+        increaseViewCount(id);
         return PostDetailResponse.from(post);
     }
 
@@ -99,8 +103,9 @@ public class PostService {
      * @return 해당 페이지 게시물 [PostSummaryResponseDto]
      */
     public CustomPageResponse<PostSummaryResponse> getPosts(Pageable pageable) {
-        Page<Post> postPage = postRepository.findByPostStatusAndPostType(PostStatus.ACTIVE, PostType.NORMAL, pageable);
-        return new CustomPageResponse<>(postPage.map(PostSummaryResponse::from));
+
+        Page<Post> postPage = postRepository.findPostsWithMember(PostStatus.ACTIVE, PostType.NORMAL, pageable);
+        return createPostSummaryResponse(postPage);
     }
 
     /**
@@ -109,8 +114,8 @@ public class PostService {
      */
     public CustomPageResponse<PostSummaryResponse> getNotices(Pageable pageable) {
 
-        Page<Post> postPage = postRepository.findByPostStatusAndPostType(PostStatus.ACTIVE, PostType.NOTICE, pageable);
-        return new CustomPageResponse<>(postPage.map(PostSummaryResponse::from));
+        Page<Post> postPage = postRepository.findPostsWithMember(PostStatus.ACTIVE, PostType.NOTICE, pageable);
+        return createPostSummaryResponse(postPage);
     }
 
     /**
@@ -119,11 +124,65 @@ public class PostService {
      * @return 해당 공지 게시물
      */
     public CustomPageResponse<PostSummaryResponse> getNoticePosts(Pageable pageable) {
-        Page<Post> postPage = postRepository.findByPostStatusAndPostType(PostStatus.ACTIVE, PostType.NOTICE, pageable);
-        return new CustomPageResponse<>(postPage.map(PostSummaryResponse::from));
+
+        Page<Post> postPage = postRepository.findPostsWithMember(PostStatus.ACTIVE, PostType.NOTICE, pageable);
+        return createPostSummaryResponse(postPage);
+    }
+
+    @Transactional
+    public void syncViewCountsToDB() {
+        ScanOptions options = ScanOptions.scanOptions().match("post:view:*").count(100).build();
+
+        try (Cursor<String> cursor = redisTemplate.scan(options)) {
+            while (cursor.hasNext()) {
+                String key = cursor.next();
+                String countStr = redisTemplate.opsForValue().get(key);
+                if (countStr == null) continue;
+
+                long count = Long.parseLong(countStr);
+                Long postId = Long.parseLong(key.split(":")[2]);
+
+                if (count > 0) {
+                    postRepository.addViewCount(postId, count);
+                }
+                redisTemplate.delete(key);
+            }
+        } catch (Exception ignored) {
+            // TODO: 로그 필요시 넣어야 함 (당장은 필요 여부를 모르겠음)
+        }
     }
 
     // --- Private ---
+
+    private CustomPageResponse<PostSummaryResponse> createPostSummaryResponse(Page<Post> postPage) {
+        if (postPage.isEmpty()) {
+            return new CustomPageResponse<>(postPage.map(post -> PostSummaryResponse.from(post, 0)));
+        }
+
+        List<String> keys = postPage.getContent().stream()
+                .map(post -> "post:view:" + post.getId())
+                .toList();
+
+        List<String> redisValues = redisTemplate.opsForValue().multiGet(keys);
+
+        Iterator<String> valueIterator = Objects.requireNonNull(redisValues).iterator();
+
+        Page<PostSummaryResponse> responsePage = postPage.map(post -> {
+            String redisValStr = valueIterator.hasNext() ? valueIterator.next() : null;
+            int redisCount = (redisValStr != null) ? Integer.parseInt(redisValStr) : 0;
+
+            int totalViewCount = post.getViewCount() + redisCount;
+
+            return PostSummaryResponse.from(post, totalViewCount);
+        });
+
+        return new CustomPageResponse<>(responsePage);
+    }
+
+    private void increaseViewCount(Long postId) {
+        String key = "post:view:" + postId;
+        redisTemplate.opsForValue().increment(key);
+    }
 
     private Member getMember(Long memberId) {
         return memberRepository.findById(memberId)

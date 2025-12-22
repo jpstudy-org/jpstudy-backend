@@ -16,10 +16,14 @@ public class OauthMember extends Member {
     @Column()
     private String providerId;
 
-    public OauthMember(String email, String username, Role role, String provider, String providerId) {
+    private OauthMember(String email, String username, Role role, String provider, String providerId) {
         super(email, username, role);
         this.provider = provider;
         this.providerId = providerId;
+    }
+
+    public static OauthMember from(String email, String username, String provider, String providerId) {
+        return new OauthMember(email, username, Role.USER, provider, providerId);
     }
 
     @Override
