@@ -36,7 +36,7 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
     show-sql: ${SHOE_SQL:false}
-    open-in-view: false
+    open-in-view: true
 
   rabbitmq:
     listener:
