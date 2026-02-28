@@ -68,7 +68,11 @@ public enum ErrorCode {
 
     // [Notification]
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "NOT-001", "error.notification.not_found"),
-    NOTIFICATION_NOT_OWNER(HttpStatus.FORBIDDEN, "NOT-002", "error.notification.not_owner");
+    NOTIFICATION_NOT_OWNER(HttpStatus.FORBIDDEN, "NOT-002", "error.notification.not_owner"),
+
+    // [Anime]
+    ANIME_NOT_FOUND(HttpStatus.NOT_FOUND, "ANI-001", "error.anime.not_found"),
+    ANIME_API_ERROR(HttpStatus.SERVICE_UNAVAILABLE, "ANI-002", "error.anime.api_error");
 
     private final HttpStatus status;
     private final String code;
