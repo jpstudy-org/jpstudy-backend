@@ -57,8 +57,8 @@ public class Anime {
     private Double score;
     private Integer scoredBy;
 
-    @Column(name = "rank")
-    private Integer ranking;
+    @Column(name = "anime_rank")
+    private Integer animeRank;
 
     private Integer popularity;
     private Integer members;
@@ -67,14 +67,17 @@ public class Anime {
     @Column(length = 20)
     private String season;
 
-    @Column(length = 50)
-    private String rating;
+    @Column(name = "age_rating", length = 50)
+    private String ageRating;
 
     @Column(length = 50)
     private String source;
 
     @Column(length = 50)
     private String duration;
+
+    @Column(length = 200)
+    private String studio;
 
     private LocalDate airedFrom;
     private LocalDate airedTo;
@@ -100,9 +103,10 @@ public class Anime {
     @Builder(access = AccessLevel.PRIVATE)
     private Anime(Integer malId, String title, String titleJapanese, String imageUrl,
                   String synopsis, String type, Integer episodes, AnimeStatus status,
-                  Double score, Integer scoredBy, Integer ranking, Integer popularity,
-                  Integer members, Integer year, String season, String rating,
-                  String source, String duration, LocalDate airedFrom, LocalDate airedTo,
+                  Double score, Integer scoredBy, Integer animeRank, Integer popularity,
+                  Integer members, Integer year, String season, String ageRating,
+                  String source, String duration, String studio,
+                  LocalDate airedFrom, LocalDate airedTo,
                   String trailerUrl, List<String> genres) {
         this.malId = malId;
         this.title = title;
@@ -114,14 +118,15 @@ public class Anime {
         this.status = status;
         this.score = score;
         this.scoredBy = scoredBy;
-        this.ranking = ranking;
+        this.animeRank = animeRank;
         this.popularity = popularity;
         this.members = members;
         this.year = year;
         this.season = season;
-        this.rating = rating;
+        this.ageRating = ageRating;
         this.source = source;
         this.duration = duration;
+        this.studio = studio;
         this.airedFrom = airedFrom;
         this.airedTo = airedTo;
         this.trailerUrl = trailerUrl;
@@ -133,9 +138,10 @@ public class Anime {
 
     public static Anime create(Integer malId, String title, String titleJapanese, String imageUrl,
                                 String synopsis, String type, Integer episodes, AnimeStatus status,
-                                Double score, Integer scoredBy, Integer ranking, Integer popularity,
-                                Integer members, Integer year, String season, String rating,
-                                String source, String duration, LocalDate airedFrom, LocalDate airedTo,
+                                Double score, Integer scoredBy, Integer animeRank, Integer popularity,
+                                Integer members, Integer year, String season, String ageRating,
+                                String source, String duration, String studio,
+                                LocalDate airedFrom, LocalDate airedTo,
                                 String trailerUrl, List<String> genres) {
         return Anime.builder()
                 .malId(malId)
@@ -148,14 +154,15 @@ public class Anime {
                 .status(status)
                 .score(score)
                 .scoredBy(scoredBy)
-                .ranking(ranking)
+                .animeRank(animeRank)
                 .popularity(popularity)
                 .members(members)
                 .year(year)
                 .season(season)
-                .rating(rating)
+                .ageRating(ageRating)
                 .source(source)
                 .duration(duration)
+                .studio(studio)
                 .airedFrom(airedFrom)
                 .airedTo(airedTo)
                 .trailerUrl(trailerUrl)
@@ -165,9 +172,10 @@ public class Anime {
 
     public void updateFromApi(String title, String titleJapanese, String imageUrl,
                               String synopsis, String type, Integer episodes, AnimeStatus status,
-                              Double score, Integer scoredBy, Integer ranking, Integer popularity,
-                              Integer members, Integer year, String season, String rating,
-                              String source, String duration, LocalDate airedFrom, LocalDate airedTo,
+                              Double score, Integer scoredBy, Integer animeRank, Integer popularity,
+                              Integer members, Integer year, String season, String ageRating,
+                              String source, String duration, String studio,
+                              LocalDate airedFrom, LocalDate airedTo,
                               String trailerUrl, List<String> genres) {
         this.title = title;
         this.titleJapanese = titleJapanese;
@@ -178,14 +186,15 @@ public class Anime {
         this.status = status;
         this.score = score;
         this.scoredBy = scoredBy;
-        this.ranking = ranking;
+        this.animeRank = animeRank;
         this.popularity = popularity;
         this.members = members;
         this.year = year;
         this.season = season;
-        this.rating = rating;
+        this.ageRating = ageRating;
         this.source = source;
         this.duration = duration;
+        this.studio = studio;
         this.airedFrom = airedFrom;
         this.airedTo = airedTo;
         this.trailerUrl = trailerUrl;

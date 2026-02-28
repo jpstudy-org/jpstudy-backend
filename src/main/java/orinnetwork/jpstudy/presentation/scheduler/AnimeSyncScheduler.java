@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import orinnetwork.jpstudy.application.anime.AnimeService;
@@ -17,9 +18,10 @@ public class AnimeSyncScheduler {
 
     private final AnimeService animeService;
 
+    @Async
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
-        log.info("Application ready - triggering initial anime sync...");
+        log.info("Application ready - triggering initial anime sync in background...");
         animeService.syncTrending();
         animeService.syncSeasonal();
     }

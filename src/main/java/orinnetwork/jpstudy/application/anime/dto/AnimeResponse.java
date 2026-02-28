@@ -7,50 +7,58 @@ import orinnetwork.jpstudy.domain.anime.Anime;
 @Schema(description = "애니메이션 응답 DTO")
 public record AnimeResponse(
         @Schema(description = "DB ID") Long id,
-        @Schema(description = "MAL ID") Integer malId,
         @Schema(description = "영어 제목") String title,
-        @Schema(description = "일본어 제목") String titleJapanese,
-        @Schema(description = "이미지 URL") String imageUrl,
+        @Schema(description = "일본어 제목") String titleJp,
+        @Schema(description = "영어 제목 (title과 동일)") String titleEn,
         @Schema(description = "시놉시스") String synopsis,
-        @Schema(description = "타입 (TV, Movie, OVA 등)") String type,
+        @Schema(description = "포스터 이미지 URL") String posterUrl,
+        @Schema(description = "배너 이미지 URL") String bannerUrl,
+        @Schema(description = "장르 목록") List<String> genres,
+        @Schema(description = "평점 (0-10)") Double rating,
         @Schema(description = "에피소드 수") Integer episodes,
-        @Schema(description = "상태") String status,
-        @Schema(description = "평점") Double score,
-        @Schema(description = "평점 참여자 수") Integer scoredBy,
-        @Schema(description = "순위") Integer ranking,
-        @Schema(description = "인기도") Integer popularity,
-        @Schema(description = "멤버 수") Integer members,
+        @Schema(description = "상태 (airing, finished, upcoming)") String status,
+        @Schema(description = "시즌 (예: Winter 2026)") String season,
+        @Schema(description = "스튜디오") String studio,
         @Schema(description = "방영 연도") Integer year,
-        @Schema(description = "시즌") String season,
-        @Schema(description = "등급") String rating,
-        @Schema(description = "원작") String source,
-        @Schema(description = "에피소드 길이") String duration,
-        @Schema(description = "트레일러 URL") String trailerUrl,
-        @Schema(description = "장르 목록") List<String> genres
+        @Schema(description = "MAL URL") String malUrl,
+        @Schema(description = "AniList URL") String anilistUrl
 ) {
     public static AnimeResponse from(Anime anime) {
+        String statusStr = anime.getStatus() != null
+                ? anime.getStatus().name().toLowerCase()
+                : null;
+
+        String seasonDisplay = formatSeason(anime.getSeason(), anime.getYear());
+
+        String malUrl = anime.getMalId() != null
+                ? "https://myanimelist.net/anime/" + anime.getMalId()
+                : null;
+
         return new AnimeResponse(
                 anime.getId(),
-                anime.getMalId(),
                 anime.getTitle(),
                 anime.getTitleJapanese(),
-                anime.getImageUrl(),
+                anime.getTitle(),
                 anime.getSynopsis(),
-                anime.getType(),
-                anime.getEpisodes(),
-                anime.getStatus() != null ? anime.getStatus().name() : null,
+                anime.getImageUrl(),
+                null,
+                anime.getGenres(),
                 anime.getScore(),
-                anime.getScoredBy(),
-                anime.getRanking(),
-                anime.getPopularity(),
-                anime.getMembers(),
+                anime.getEpisodes(),
+                statusStr,
+                seasonDisplay,
+                anime.getStudio(),
                 anime.getYear(),
-                anime.getSeason(),
-                anime.getRating(),
-                anime.getSource(),
-                anime.getDuration(),
-                anime.getTrailerUrl(),
-                anime.getGenres()
+                malUrl,
+                null
         );
+    }
+
+    private static String formatSeason(String season, Integer year) {
+        if (season == null || year == null) {
+            return year != null ? String.valueOf(year) : null;
+        }
+        String capitalized = season.substring(0, 1).toUpperCase() + season.substring(1).toLowerCase();
+        return capitalized + " " + year;
     }
 }

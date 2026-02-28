@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import orinnetwork.jpstudy.application.anime.AnimeService;
+import orinnetwork.jpstudy.application.anime.dto.AnimePageResponse;
 import orinnetwork.jpstudy.application.anime.dto.AnimeResponse;
 import orinnetwork.jpstudy.application.anime.dto.AnimeSearchRequest;
-import orinnetwork.jpstudy.application.dto.CustomPageResponse;
 
 @Tag(name = "Anime API", description = "애니메이션 추천 API")
 @RestController
@@ -46,15 +46,15 @@ public class AnimeController {
 
     @Operation(summary = "애니메이션 검색", description = "제목, 장르, 연도, 상태 등으로 애니메이션 검색")
     @GetMapping("/search")
-    public ResponseEntity<CustomPageResponse<AnimeResponse>> search(
+    public ResponseEntity<AnimePageResponse> search(
             @Parameter(description = "검색어") @RequestParam(required = false) String q,
-            @Parameter(description = "장르 필터") @RequestParam(required = false) List<String> genres,
+            @Parameter(description = "장르 필터 (쉼표 구분)") @RequestParam(required = false) List<String> genres,
             @Parameter(description = "시작 연도") @RequestParam(required = false) Integer yearFrom,
             @Parameter(description = "끝 연도") @RequestParam(required = false) Integer yearTo,
-            @Parameter(description = "상태") @RequestParam(required = false) String status,
-            @Parameter(description = "타입") @RequestParam(required = false) String type,
-            @Parameter(description = "정렬 기준") @RequestParam(required = false) String sort,
-            @Parameter(description = "정렬 방향") @RequestParam(required = false) String order,
+            @Parameter(description = "상태 (airing, finished, upcoming)") @RequestParam(required = false) String status,
+            @Parameter(description = "타입 (TV, Movie, OVA 등)") @RequestParam(required = false) String type,
+            @Parameter(description = "정렬 기준 (rating, popularity, newest, title)") @RequestParam(required = false) String sort,
+            @Parameter(description = "정렬 방향 (asc, desc)") @RequestParam(required = false) String order,
             @PageableDefault(size = 20) Pageable pageable
     ) {
         AnimeSearchRequest request = new AnimeSearchRequest(q, genres, yearFrom, yearTo, status, type, sort, order);

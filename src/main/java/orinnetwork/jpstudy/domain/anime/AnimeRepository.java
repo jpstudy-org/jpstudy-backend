@@ -32,32 +32,19 @@ public interface AnimeRepository extends JpaRepository<Anime, Long> {
             Pageable pageable
     );
 
-    @Query(value = """
-            SELECT DISTINCT a.* FROM anime a
-            INNER JOIN anime_genre ag ON a.id = ag.anime_id
+    @Query("""
+            SELECT DISTINCT a FROM Anime a JOIN a.genres g
             WHERE (:query IS NULL OR LOWER(a.title) LIKE LOWER(CONCAT('%', :query, '%'))
-                   OR LOWER(a.title_japanese) LIKE LOWER(CONCAT('%', :query, '%')))
+                   OR LOWER(a.titleJapanese) LIKE LOWER(CONCAT('%', :query, '%')))
             AND (:status IS NULL OR a.status = :status)
             AND (:yearFrom IS NULL OR a.year >= :yearFrom)
             AND (:yearTo IS NULL OR a.year <= :yearTo)
             AND (:type IS NULL OR a.type = :type)
-            AND ag.genre IN (:genres)
-            """,
-            countQuery = """
-            SELECT COUNT(DISTINCT a.id) FROM anime a
-            INNER JOIN anime_genre ag ON a.id = ag.anime_id
-            WHERE (:query IS NULL OR LOWER(a.title) LIKE LOWER(CONCAT('%', :query, '%'))
-                   OR LOWER(a.title_japanese) LIKE LOWER(CONCAT('%', :query, '%')))
-            AND (:status IS NULL OR a.status = :status)
-            AND (:yearFrom IS NULL OR a.year >= :yearFrom)
-            AND (:yearTo IS NULL OR a.year <= :yearTo)
-            AND (:type IS NULL OR a.type = :type)
-            AND ag.genre IN (:genres)
-            """,
-            nativeQuery = true)
+            AND g IN (:genres)
+            """)
     Page<Anime> searchWithGenres(
             @Param("query") String query,
-            @Param("status") String status,
+            @Param("status") AnimeStatus status,
             @Param("yearFrom") Integer yearFrom,
             @Param("yearTo") Integer yearTo,
             @Param("type") String type,

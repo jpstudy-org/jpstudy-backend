@@ -2,6 +2,7 @@ package orinnetwork.jpstudy.application.anime;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,9 +12,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import orinnetwork.jpstudy.application.anime.dto.AnimePageResponse;
 import orinnetwork.jpstudy.application.anime.dto.AnimeResponse;
 import orinnetwork.jpstudy.application.anime.dto.AnimeSearchRequest;
-import orinnetwork.jpstudy.application.dto.CustomPageResponse;
 import orinnetwork.jpstudy.domain.anime.Anime;
 import orinnetwork.jpstudy.domain.anime.AnimeList;
 import orinnetwork.jpstudy.domain.anime.AnimeListRepository;
@@ -59,21 +60,24 @@ public class AnimeService {
                 .toList();
     }
 
-    public CustomPageResponse<AnimeResponse> search(AnimeSearchRequest request, Pageable pageable) {
-        Sort sort = resolveSort(request.sort(), request.order());
+    public AnimePageResponse search(AnimeSearchRequest request, Pageable pageable) {
+        Sort sort = resolveSort(request.sort());
         Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
 
-        AnimeStatus status = request.status() != null ? AnimeStatus.valueOf(request.status()) : null;
+        AnimeStatus status = parseStatus(request.status());
+
+        // Parse comma-separated genres from frontend
+        List<String> genres = parseGenres(request.genres());
 
         Page<Anime> page;
-        if (request.genres() != null && !request.genres().isEmpty()) {
+        if (genres != null && !genres.isEmpty()) {
             page = animeRepository.searchWithGenres(
                     request.q(),
-                    status != null ? status.name() : null,
+                    status,
                     request.yearFrom(),
                     request.yearTo(),
                     request.type(),
-                    request.genres(),
+                    genres,
                     sortedPageable
             );
         } else {
@@ -88,55 +92,66 @@ public class AnimeService {
         }
 
         Page<AnimeResponse> responsePage = page.map(AnimeResponse::from);
-        return new CustomPageResponse<>(responsePage);
+        return AnimePageResponse.from(responsePage);
     }
 
-    @Transactional
     public AnimeResponse getById(Long id) {
         Anime anime = animeRepository.findById(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.ANIME_NOT_FOUND));
 
         if (anime.isStale()) {
-            try {
-                JikanAnimeDetailResponse response = jikanApiClient.getAnimeById(anime.getMalId());
-                if (response != null && response.data() != null) {
-                    updateAnimeFromData(anime, response.data());
-                }
-            } catch (Exception e) {
-                log.warn("Failed to refresh stale anime data for malId={}: {}", anime.getMalId(), e.getMessage());
-            }
+            refreshAnimeAsync(anime.getId(), anime.getMalId());
         }
 
         return AnimeResponse.from(anime);
     }
 
-    @Transactional
     public List<AnimeResponse> getSimilar(Long id) {
         Anime anime = animeRepository.findById(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.ANIME_NOT_FOUND));
 
+        List<JikanAnimeData> recommendations;
         try {
             JikanRecommendationResponse response = jikanApiClient.getAnimeRecommendations(anime.getMalId());
             if (response == null || response.data() == null || response.data().isEmpty()) {
                 return List.of();
             }
-
-            List<AnimeResponse> results = new ArrayList<>();
-            int count = 0;
-            for (JikanRecommendationResponse.RecommendationEntry entry : response.data()) {
-                if (count >= 10) break;
-                JikanAnimeData data = entry.entry();
-                if (data == null || data.malId() == null) continue;
-
-                Anime similar = animeRepository.findByMalId(data.malId())
-                        .orElseGet(() -> saveAnimeFromData(data));
-                results.add(AnimeResponse.from(similar));
-                count++;
-            }
-            return results;
+            recommendations = response.data().stream()
+                    .limit(10)
+                    .filter(entry -> entry.entry() != null && entry.entry().malId() != null)
+                    .map(JikanRecommendationResponse.RecommendationEntry::entry)
+                    .toList();
         } catch (Exception e) {
             log.warn("Failed to fetch similar anime for id={}: {}", id, e.getMessage());
             return List.of();
+        }
+
+        return saveSimilarAnime(recommendations);
+    }
+
+    @Transactional
+    public List<AnimeResponse> saveSimilarAnime(List<JikanAnimeData> recommendations) {
+        List<AnimeResponse> results = new ArrayList<>();
+        for (JikanAnimeData data : recommendations) {
+            Anime similar = animeRepository.findByMalId(data.malId())
+                    .orElseGet(() -> saveAnimeFromData(data));
+            results.add(AnimeResponse.from(similar));
+        }
+        return results;
+    }
+
+    @Transactional
+    public void refreshAnime(Long id, Integer malId) {
+        try {
+            JikanAnimeDetailResponse response = jikanApiClient.getAnimeById(malId);
+            if (response != null && response.data() != null) {
+                Anime anime = animeRepository.findById(id).orElse(null);
+                if (anime != null) {
+                    updateAnimeFromData(anime, response.data());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to refresh stale anime data for malId={}: {}", malId, e.getMessage());
         }
     }
 
@@ -171,6 +186,17 @@ public class AnimeService {
         } catch (Exception e) {
             log.error("Failed to sync seasonal anime: {}", e.getMessage(), e);
         }
+    }
+
+    private void refreshAnimeAsync(Long id, Integer malId) {
+        // Fire-and-forget refresh in a separate thread to avoid holding the read transaction
+        Thread.startVirtualThread(() -> {
+            try {
+                refreshAnime(id, malId);
+            } catch (Exception e) {
+                log.warn("Async refresh failed for malId={}: {}", malId, e.getMessage());
+            }
+        });
     }
 
     private void syncList(AnimeListType listType, List<JikanAnimeData> dataList) {
@@ -213,6 +239,7 @@ public class AnimeService {
                 data.rating(),
                 data.source(),
                 data.duration(),
+                data.getStudioName(),
                 airedFrom,
                 airedTo,
                 data.getTrailerUrl(),
@@ -243,6 +270,7 @@ public class AnimeService {
                 data.rating(),
                 data.source(),
                 data.duration(),
+                data.getStudioName(),
                 airedFrom,
                 airedTo,
                 data.getTrailerUrl(),
@@ -253,25 +281,46 @@ public class AnimeService {
     private LocalDate parseDate(String dateStr) {
         if (dateStr == null || dateStr.isBlank()) return null;
         try {
-            // Jikan returns ISO 8601 format like "2023-04-09T00:00:00+00:00"
             return LocalDate.parse(dateStr.substring(0, 10));
         } catch (Exception e) {
             return null;
         }
     }
 
-    private Sort resolveSort(String sort, String order) {
-        Sort.Direction direction = "asc".equalsIgnoreCase(order) ? Sort.Direction.ASC : Sort.Direction.DESC;
+    private AnimeStatus parseStatus(String status) {
+        if (status == null || status.isBlank()) return null;
+        try {
+            return AnimeStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
 
+    private List<String> parseGenres(List<String> genres) {
+        if (genres == null || genres.isEmpty()) return null;
+        // Frontend sends genres as comma-separated single value: "Action,Fantasy"
+        // Spring may bind it as a single-element list ["Action,Fantasy"]
+        List<String> result = new ArrayList<>();
+        for (String genre : genres) {
+            if (genre.contains(",")) {
+                result.addAll(Arrays.asList(genre.split(",")));
+            } else {
+                result.add(genre);
+            }
+        }
+        return result.stream().map(String::trim).filter(s -> !s.isEmpty()).toList();
+    }
+
+    private Sort resolveSort(String sort) {
         if (sort == null || sort.isBlank()) {
             return Sort.by(Sort.Direction.DESC, "score");
         }
 
         return switch (sort.toLowerCase()) {
-            case "popularity" -> Sort.by(Sort.Direction.ASC, "popularity"); // lower = more popular
-            case "title" -> Sort.by(direction, "title");
-            case "year" -> Sort.by(direction, "year");
-            case "score" -> Sort.by(direction, "score");
+            case "rating" -> Sort.by(Sort.Direction.DESC, "score");
+            case "popularity" -> Sort.by(Sort.Direction.ASC, "popularity");
+            case "newest" -> Sort.by(Sort.Direction.DESC, "year");
+            case "title" -> Sort.by(Sort.Direction.ASC, "title");
             default -> Sort.by(Sort.Direction.DESC, "score");
         };
     }

@@ -26,7 +26,8 @@ public record JikanAnimeData(
         @JsonProperty("rating") String rating,
         @JsonProperty("source") String source,
         @JsonProperty("duration") String duration,
-        @JsonProperty("genres") List<Genre> genres
+        @JsonProperty("genres") List<Genre> genres,
+        @JsonProperty("studios") List<Studio> studios
 ) {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Images(
@@ -56,6 +57,12 @@ public record JikanAnimeData(
             @JsonProperty("name") String name
     ) {}
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Studio(
+            @JsonProperty("mal_id") Integer malId,
+            @JsonProperty("name") String name
+    ) {}
+
     public String getImageUrl() {
         if (images != null && images.jpg() != null) {
             return images.jpg().largeImageUrl() != null
@@ -73,5 +80,12 @@ public record JikanAnimeData(
         return genres != null
                 ? genres.stream().map(Genre::name).toList()
                 : List.of();
+    }
+
+    public String getStudioName() {
+        if (studios != null && !studios.isEmpty()) {
+            return studios.stream().map(Studio::name).findFirst().orElse(null);
+        }
+        return null;
     }
 }
