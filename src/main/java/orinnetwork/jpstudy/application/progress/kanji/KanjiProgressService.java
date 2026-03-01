@@ -1,6 +1,7 @@
 package orinnetwork.jpstudy.application.progress.kanji;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -32,26 +33,19 @@ public class KanjiProgressService {
 
     private static final int NEW_CARDS_PER_SESSION = 30;
 
+    @Transactional
     public StudySessionResponse getStudySession(Long memberId) {
         Member member = memberRepository.getReferenceById(memberId);
         String lang = member.getLanguagePreference();
 
         List<KanjiCard> reviewCards = getReviewCards(member, lang);
-        List<KanjiCard> newCards = getNewCards(memberId, lang);
+        List<KanjiCard> newCards = getNewCards(member, memberId, lang);
 
         return new StudySessionResponse(reviewCards, newCards);
     }
 
     @Transactional
     public void updateProgress(Long memberId, Long kanjiId, ReviewDifficulty difficulty) {
-
-        /**
-         * TODO: 학습에서 'AGAIN' 로직은 백엔드에서 처리해야할까?
-         * 프론트에 다시 데이터를 받는 구조가 아닌데, 이러한 로직이면 계속 시간이 중첩으로 쌓여서 반복해서 AGAIN하면,
-         * 학습 곡선에 오류가 발생 : 일단 return으로 무시하되, 반드시 대책을 강구할 것
-         */
-        if (difficulty == ReviewDifficulty.AGAIN) return;
-
         MemberKanjiProgress progress = getOrCreateProgress(memberId, kanjiId);
 
         ReviewResult result = fsrsScheduler.calculateNextReview(
@@ -77,11 +71,28 @@ public class KanjiProgressService {
                 .toList();
     }
 
-    private List<KanjiCard> getNewCards(Long memberId, String lang) {
-        return kanjiRepository.findNewKanjiForMember(memberId, PageRequest.of(0, NEW_CARDS_PER_SESSION))
-                .stream()
-                .map(k -> new KanjiCard(k, lang))
-                .toList();
+    private List<KanjiCard> getNewCards(Member member, Long memberId, String lang) {
+        List<MemberKanjiProgress> unreviewedProgress = progressRepository.findUnreviewedByMember(member);
+
+        int remaining = NEW_CARDS_PER_SESSION - unreviewedProgress.size();
+
+        List<KanjiCard> newCards = new ArrayList<>(
+                unreviewedProgress.stream()
+                        .map(p -> new KanjiCard(p.getKanji(), lang))
+                        .toList()
+        );
+
+        if (remaining > 0) {
+            LocalDateTime now = LocalDateTime.now();
+            List<Kanji> freshKanji = kanjiRepository.findNewKanjiForMember(memberId, PageRequest.of(0, remaining));
+
+            for (Kanji kanji : freshKanji) {
+                progressRepository.save(new MemberKanjiProgress(member, kanji, now));
+                newCards.add(new KanjiCard(kanji, lang));
+            }
+        }
+
+        return newCards;
     }
 
     private MemberKanjiProgress getOrCreateProgress(Long memberId, Long kanjiId) {

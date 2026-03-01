@@ -19,4 +19,8 @@ public interface MemberKanjiProgressRepository extends JpaRepository<MemberKanji
             "AND p.nextReviewAt <= :now " +
             "AND p.masteryLevel != 'MASTERED'")
     List<MemberKanjiProgress> findDueForReview(@Param("member") Member member, @Param("now") LocalDateTime now);
+
+    @Query("SELECT p FROM MemberKanjiProgress p JOIN FETCH p.kanji k " +
+            "WHERE p.member = :member AND p.stability = 0.0 AND k.deletedAt IS NULL")
+    List<MemberKanjiProgress> findUnreviewedByMember(@Param("member") Member member);
 }
