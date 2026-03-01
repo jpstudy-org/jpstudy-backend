@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs grep:*)",
+      "Bash(./gradlew clean:*)",
+      "Bash(./gradlew test:*)",
+      "WebFetch(domain:api.jikan.moe)"
+    ]
+  }
+}

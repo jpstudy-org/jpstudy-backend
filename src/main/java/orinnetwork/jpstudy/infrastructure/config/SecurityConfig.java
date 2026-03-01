@@ -101,7 +101,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET,
                                 "/api/posts",
                                 "/api/posts/*",
-                                "/api/posts/*/comments"
+                                "/api/posts/*/comments",
+                                "/api/anime/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 );
