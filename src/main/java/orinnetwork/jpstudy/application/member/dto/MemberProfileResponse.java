@@ -21,12 +21,17 @@ public class MemberProfileResponse {
     @Schema(description = "총 누적 경험치")
     private final long experience;
 
+    @Schema(description = "언어 설정 (kr, en, jp)")
+    private final String languagePreference;
+
     @Builder
-    public MemberProfileResponse(String email, String username, int level, long experience) {
+    public MemberProfileResponse(String email, String username, int level, long experience,
+                                 String languagePreference) {
         this.email = email;
         this.username = username;
         this.level = level;
         this.experience = experience;
+        this.languagePreference = languagePreference;
     }
 
     public static MemberProfileResponse from(Member member) {
@@ -35,6 +40,7 @@ public class MemberProfileResponse {
                 .username(member.getUsername())
                 .level(member.getLevel())
                 .experience(member.getExperience())
+                .languagePreference(member.getLanguagePreference())
                 .build();
     }
 }

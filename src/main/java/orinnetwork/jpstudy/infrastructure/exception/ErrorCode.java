@@ -70,6 +70,10 @@ public enum ErrorCode {
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "NOT-001", "error.notification.not_found"),
     NOTIFICATION_NOT_OWNER(HttpStatus.FORBIDDEN, "NOT-002", "error.notification.not_owner"),
 
+    // [Study Session]
+    SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "SES-001", "error.session.not_found"),
+    SESSION_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "SES-002", "error.session.not_completed"),
+
     // [Anime]
     ANIME_NOT_FOUND(HttpStatus.NOT_FOUND, "ANI-001", "error.anime.not_found"),
     ANIME_API_ERROR(HttpStatus.SERVICE_UNAVAILABLE, "ANI-002", "error.anime.api_error");

@@ -20,4 +20,18 @@ public interface MemberWordProgressRepository extends JpaRepository<MemberWordPr
             + "AND p.nextReviewAt <= :now "
             + "AND p.masteryLevel != 'MASTERED'")
     List<MemberWordProgress> findDueForReview(@Param("member") Member member, @Param("now") LocalDateTime now);
+
+    @Query("SELECT DISTINCT p FROM MemberWordProgress p "
+            + "JOIN FETCH p.word w "
+            + "LEFT JOIN FETCH w.meanings m "
+            + "WHERE p.member = :member AND p.stability = 0.0 AND w.deletedAt IS NULL")
+    List<MemberWordProgress> findUnreviewedByMember(@Param("member") Member member);
+
+    @Query("SELECT p.masteryLevel, COUNT(p) FROM MemberWordProgress p " +
+            "WHERE p.member = :member GROUP BY p.masteryLevel")
+    List<Object[]> countByMasteryLevel(@Param("member") Member member);
+
+    @Query("SELECT p.nextReviewAt FROM MemberWordProgress p " +
+            "WHERE p.member = :member AND p.masteryLevel != 'MASTERED' AND p.stability > 0")
+    List<LocalDateTime> findUpcomingReviewDates(@Param("member") Member member);
 }

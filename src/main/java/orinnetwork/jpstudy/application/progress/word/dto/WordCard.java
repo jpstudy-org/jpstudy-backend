@@ -3,6 +3,7 @@ package orinnetwork.jpstudy.application.progress.word.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import lombok.Getter;
+import orinnetwork.jpstudy.application.progress.common.dto.IntervalPreview;
 import orinnetwork.jpstudy.domain.word.Meaning;
 import orinnetwork.jpstudy.domain.word.Word;
 
@@ -22,10 +23,14 @@ public class WordCard {
     @Schema(description = "단어의 의미 목록 (사용자 설정 언어에 맞춰 반환됨)")
     private final List<String> meanings;
 
-    public WordCard(Word word, String lang) {
+    @Schema(description = "각 난이도 선택 시 다음 복습 예정 시간 미리보기")
+    private final IntervalPreview intervalPreview;
+
+    public WordCard(Word word, String lang, IntervalPreview intervalPreview) {
         this.wordId = word.getId();
         this.term = word.getTerm();
         this.reading = word.getReading();
+        this.intervalPreview = intervalPreview;
 
         if ("en".equalsIgnoreCase(lang) || "jp".equalsIgnoreCase(lang)) {
             this.meanings = word.getMeanings().stream()

@@ -38,4 +38,11 @@ public interface KanjiRepository extends JpaRepository<Kanji, Long> {
     Page<Kanji> searchAllByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
     Page<Kanji> findAllByDeletedAtIsNull(Pageable pageable);
+
+    @Query("SELECT COUNT(k) FROM Kanji k " +
+            "WHERE k.deletedAt IS NULL AND k.level > 0 AND NOT EXISTS (" +
+            "  SELECT 1 FROM MemberKanjiProgress p " +
+            "  WHERE p.kanji = k AND p.member.id = :memberId" +
+            ")")
+    long countNewKanjiForMember(@Param("memberId") Long memberId);
 }

@@ -4,7 +4,8 @@
       "Bash(xargs grep:*)",
       "Bash(./gradlew clean:*)",
       "Bash(./gradlew test:*)",
-      "WebFetch(domain:api.jikan.moe)"
+      "WebFetch(domain:api.jikan.moe)",
+      "Bash(find . -name \"*.md\" -type f 2>/dev/null | head -20)"
     ]
   }
 }

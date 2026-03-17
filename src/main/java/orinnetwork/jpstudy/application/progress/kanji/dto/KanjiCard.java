@@ -2,6 +2,7 @@ package orinnetwork.jpstudy.application.progress.kanji.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
+import orinnetwork.jpstudy.application.progress.common.dto.IntervalPreview;
 import orinnetwork.jpstudy.domain.kanji.Kanji;
 
 @Getter
@@ -23,11 +24,15 @@ public class KanjiCard {
     @Schema(description = "훈독 (일본어 고유어 발음 기반의 읽는 법)")
     private final String kunyomi;
 
-    public KanjiCard(Kanji kanji, String lang) {
+    @Schema(description = "각 난이도 선택 시 다음 복습 예정 시간 미리보기")
+    private final IntervalPreview intervalPreview;
+
+    public KanjiCard(Kanji kanji, String lang, IntervalPreview intervalPreview) {
         this.kanjiId = kanji.getId();
         this.character = kanji.getCharacter();
         this.onyomi = kanji.getOnyomi();
         this.kunyomi = kanji.getKunyomi();
+        this.intervalPreview = intervalPreview;
 
         if ("en".equalsIgnoreCase(lang) || "jp".equalsIgnoreCase(lang)) {
             this.meaning = kanji.getMeaningEn();

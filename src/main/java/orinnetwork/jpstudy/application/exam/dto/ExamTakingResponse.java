@@ -29,10 +29,10 @@ public record ExamTakingResponse(
             Long questionId,
 
             @Schema(description = "시험 내 문제 번호 (순서)")
-            int questionNumber,
+            int number,
 
             @Schema(description = "문제 본문 내용")
-            String questionText,
+            String content,
 
             @Schema(description = "독해 지문 (선택 사항)", nullable = true)
             String passage,
@@ -51,8 +51,7 @@ public record ExamTakingResponse(
             Long choiceId,
 
             @Schema(description = "선택지 내용 텍스트")
-            String choiceText
-            // 정답 여부(isCorrect)는 의도적으로 제외됨
+            String text
     ) {
     }
 

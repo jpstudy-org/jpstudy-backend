@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import orinnetwork.jpstudy.application.progress.common.dto.ReviewResponse;
 import orinnetwork.jpstudy.application.progress.kanji.KanjiProgressService;
 import orinnetwork.jpstudy.application.progress.kanji.dto.ReviewRequest;
 import orinnetwork.jpstudy.application.progress.kanji.dto.StudySessionResponse;
@@ -27,7 +28,8 @@ public class KanjiProgressController {
 
     private final KanjiProgressService kanjiProgressService;
 
-    @Operation(summary = "한자 학습 세션 가져오기", description = "사용자에게 할당된 새로운 학습 또는 복습 한자 세션을 조회합니다.")
+    @Operation(summary = "한자 학습 세션 가져오기",
+            description = "활성 세션이 있으면 이어서, 없으면 새 세션(30개)을 생성하여 반환합니다.")
     @GetMapping("/session")
     public ResponseEntity<StudySessionResponse> getStudySession(
             @Parameter(hidden = true)
@@ -35,24 +37,36 @@ public class KanjiProgressController {
     ) {
         Long memberId = userDetails.getMemberId();
         StudySessionResponse session = kanjiProgressService.getStudySession(memberId);
-
         return ResponseEntity.ok(session);
     }
 
-    @Operation(summary = "한자 복습 결과 제출", description = "사용자가 복습한 한자의 난이도 평가 결과를 저장하고 진도를 업데이트합니다.")
+    @Operation(summary = "추가 학습 요청",
+            description = "현재 세션을 완료하고 새로운 30개 블록의 학습 세션을 생성합니다.")
+    @PostMapping("/session/add-more")
+    public ResponseEntity<StudySessionResponse> addMoreLearning(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long memberId = userDetails.getMemberId();
+        StudySessionResponse session = kanjiProgressService.addMoreLearning(memberId);
+        return ResponseEntity.ok(session);
+    }
+
+    @Operation(summary = "한자 복습 결과 제출",
+            description = "복습 난이도 평가를 저장하고 다음 복습 일정 및 세션 진행 상태를 반환합니다.")
     @PostMapping("/review")
-    public ResponseEntity<Void> submitReview(
+    public ResponseEntity<ReviewResponse> submitReview(
             @Parameter(hidden = true)
             @AuthenticationPrincipal CustomUserDetails userDetails,
 
             @Valid @RequestBody ReviewRequest request
     ) {
         Long memberId = userDetails.getMemberId();
-        kanjiProgressService.updateProgress(
+        ReviewResponse response = kanjiProgressService.updateProgress(
                 memberId,
                 request.getKanjiId(),
                 request.getDifficulty()
         );
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(response);
     }
 }

@@ -3,6 +3,7 @@ package orinnetwork.jpstudy.application.progress.common.component;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import org.springframework.stereotype.Component;
+import orinnetwork.jpstudy.application.progress.common.dto.IntervalPreview;
 import orinnetwork.jpstudy.application.progress.common.dto.ReviewDifficulty;
 import orinnetwork.jpstudy.application.progress.common.dto.ReviewResult;
 import orinnetwork.jpstudy.domain.kanji.Kanji;
@@ -157,6 +158,31 @@ public class FsrsScheduler {
 
     private double constrain(double d) {
         return Math.min(Math.max(d, 1.0), 10.0);
+    }
+
+    /**
+     * 각 난이도 선택 시 다음 복습 시간 미리보기 계산
+     * 새 항목(stability==0)과 복습 항목 모두 지원
+     */
+    public IntervalPreview previewIntervals(double stability, double difficulty,
+                                             LocalDateTime lastReviewedAt, double intrinsicDifficulty) {
+        LocalDateTime now = LocalDateTime.now();
+
+        if (stability == 0.0) {
+            return new IntervalPreview(
+                    calculateInitial(now, 1, intrinsicDifficulty).nextReviewAt(),
+                    calculateInitial(now, 2, intrinsicDifficulty).nextReviewAt(),
+                    calculateInitial(now, 3, intrinsicDifficulty).nextReviewAt(),
+                    calculateInitial(now, 4, intrinsicDifficulty).nextReviewAt()
+            );
+        }
+
+        return new IntervalPreview(
+                calculateReview(stability, difficulty, lastReviewedAt, now, 1).nextReviewAt(),
+                calculateReview(stability, difficulty, lastReviewedAt, now, 2).nextReviewAt(),
+                calculateReview(stability, difficulty, lastReviewedAt, now, 3).nextReviewAt(),
+                calculateReview(stability, difficulty, lastReviewedAt, now, 4).nextReviewAt()
+        );
     }
 
     private int mapToRating(ReviewDifficulty difficulty) {
